@@ -30,15 +30,26 @@ public class MoneyTests
         Assert.Throws<DomainException>(action);
     }
 
+    [Fact]
+    public void Create_WithMoreThanTwoDecimalPlaces_ShouldThrowDomainException()
+    {
+        var action = () => Money.Create(
+            10.123m,
+            "BRL");
+
+        Assert.Throws<DomainException>(action);
+    }
+
     [Theory]
+    [InlineData(null)]
     [InlineData("")]
     [InlineData(" ")]
     public void Create_WithoutCurrency_ShouldThrowDomainException(
-        string currency)
+        string? currency)
     {
         var action = () => Money.Create(
             15000m,
-            currency);
+            currency!);
 
         Assert.Throws<DomainException>(action);
     }
@@ -47,7 +58,10 @@ public class MoneyTests
     [InlineData("B")]
     [InlineData("BR")]
     [InlineData("BRLL")]
-    public void Create_WithInvalidCurrencyLength_ShouldThrowDomainException(
+    [InlineData("123")]
+    [InlineData("@@@")]
+    [InlineData("R$X")]
+    public void Create_WithInvalidCurrencyFormat_ShouldThrowDomainException(
         string currency)
     {
         var action = () => Money.Create(
@@ -58,11 +72,25 @@ public class MoneyTests
     }
 
     [Fact]
-    public void Create_WithLowercaseCurrency_ShouldNormalizeCurrency()
+    public void Create_WithUnsupportedCurrency_ShouldThrowDomainException()
+    {
+        var action = () => Money.Create(
+            15000m,
+            "JPY");
+
+        Assert.Throws<DomainException>(action);
+    }
+
+    [Theory]
+    [InlineData("brl")]
+    [InlineData(" BRL ")]
+    [InlineData(" brl ")]
+    public void Create_ShouldNormalizeCurrency(
+        string currency)
     {
         var money = Money.Create(
             15000m,
-            "brl");
+            currency);
 
         Assert.Equal("BRL", money.Currency);
     }
@@ -76,8 +104,36 @@ public class MoneyTests
 
         var second = Money.Create(
             15000m,
-            "BRL");
+            " brl ");
 
         Assert.Equal(first, second);
+    }
+
+    [Fact]
+    public void TwoMoneyInstances_WithDifferentValues_ShouldNotBeEqual()
+    {
+        var first = Money.Create(
+            15000m,
+            "BRL");
+
+        var second = Money.Create(
+            16000m,
+            "BRL");
+
+        Assert.NotEqual(first, second);
+    }
+
+    [Fact]
+    public void TwoMoneyInstances_WithDifferentCurrencies_ShouldNotBeEqual()
+    {
+        var first = Money.Create(
+            15000m,
+            "BRL");
+
+        var second = Money.Create(
+            15000m,
+            "USD");
+
+        Assert.NotEqual(first, second);
     }
 }

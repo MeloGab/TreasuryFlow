@@ -43,11 +43,7 @@ public class PaymentOrderTests
     public void Create_WithoutDescription_ShouldThrowDomainException(
         string description)
     {
-        var action = () => PaymentOrder.Create(
-            description,
-            15000m,
-            "BRL",
-            "Fornecedor XPTO");
+        var action = () => PaymentOrder.Create(description, 15000m, "BRL", "Fornecedor XPTO");
 
         Assert.Throws<DomainException>(action);
     }
@@ -58,11 +54,7 @@ public class PaymentOrderTests
     public void Create_WithoutCurrency_ShouldThrowDomainException(
         string currency)
     {
-        var action = () => PaymentOrder.Create(
-            "Pagamento fornecedor",
-            15000m,
-            currency,
-            "Fornecedor XPTO");
+        var action = () => PaymentOrder.Create("Pagamento fornecedor", 15000m, currency, "Fornecedor XPTO");
 
         Assert.Throws<DomainException>(action);
     }
@@ -73,11 +65,7 @@ public class PaymentOrderTests
     public void Create_WithoutBeneficiary_ShouldThrowDomainException(
         string beneficiary)
     {
-        var action = () => PaymentOrder.Create(
-            "Pagamento fornecedor",
-            15000m,
-            "BRL",
-            beneficiary);
+        var action = () => PaymentOrder.Create("Pagamento fornecedor", 15000m, "BRL", beneficiary);
 
         Assert.Throws<DomainException>(action);
     }
@@ -242,13 +230,99 @@ public class PaymentOrderTests
         Assert.Empty(paymentOrder.DomainEvents);
     }
 
+    [Theory]
+    [InlineData(PaymentOrderStatus.Pending)]
+    [InlineData(PaymentOrderStatus.Processing)]
+    [InlineData(PaymentOrderStatus.Completed)]
+    [InlineData(PaymentOrderStatus.Failed)]
+    [InlineData(PaymentOrderStatus.Cancelled)]
+    public void Submit_WhenNotDraft_ShouldPreserveState(
+        PaymentOrderStatus status)
+    {
+        var paymentOrder = CreatePaymentOrderInStatus(status);
+        var previousEventCount = paymentOrder.DomainEvents.Count;
+
+        var action = () => paymentOrder.Submit();
+
+        Assert.Throws<DomainException>(action);
+        Assert.Equal(status, paymentOrder.Status);
+        Assert.Equal(previousEventCount, paymentOrder.DomainEvents.Count);
+    }
+
+    [Theory]
+    [InlineData(PaymentOrderStatus.Draft)]
+    [InlineData(PaymentOrderStatus.Processing)]
+    [InlineData(PaymentOrderStatus.Completed)]
+    [InlineData(PaymentOrderStatus.Failed)]
+    [InlineData(PaymentOrderStatus.Cancelled)]
+    public void StartProcessing_WhenNotPending_ShouldPreserveState(
+        PaymentOrderStatus status)
+    {
+        var paymentOrder = CreatePaymentOrderInStatus(status);
+
+        var action = () => paymentOrder.StartProcessing();
+
+        Assert.Throws<DomainException>(action);
+        Assert.Equal(status, paymentOrder.Status);
+    }
+
+    [Theory]
+    [InlineData(PaymentOrderStatus.Draft)]
+    [InlineData(PaymentOrderStatus.Pending)]
+    [InlineData(PaymentOrderStatus.Completed)]
+    [InlineData(PaymentOrderStatus.Failed)]
+    [InlineData(PaymentOrderStatus.Cancelled)]
+    public void Complete_WhenNotProcessing_ShouldPreserveState(
+        PaymentOrderStatus status)
+    {
+        var paymentOrder = CreatePaymentOrderInStatus(status);
+        var previousProcessedAt = paymentOrder.ProcessedAt;
+
+        var action = () => paymentOrder.Complete();
+
+        Assert.Throws<DomainException>(action);
+        Assert.Equal(status, paymentOrder.Status);
+        Assert.Equal(previousProcessedAt, paymentOrder.ProcessedAt);
+    }
+
+    [Theory]
+    [InlineData(PaymentOrderStatus.Draft)]
+    [InlineData(PaymentOrderStatus.Pending)]
+    [InlineData(PaymentOrderStatus.Completed)]
+    [InlineData(PaymentOrderStatus.Failed)]
+    [InlineData(PaymentOrderStatus.Cancelled)]
+    public void Fail_WhenNotProcessing_ShouldPreserveState(
+        PaymentOrderStatus status)
+    {
+        var paymentOrder = CreatePaymentOrderInStatus(status);
+        var previousProcessedAt = paymentOrder.ProcessedAt;
+
+        var action = () => paymentOrder.Fail();
+
+        Assert.Throws<DomainException>(action);
+        Assert.Equal(status, paymentOrder.Status);
+        Assert.Equal(previousProcessedAt, paymentOrder.ProcessedAt);
+    }
+
+    [Theory]
+    [InlineData(PaymentOrderStatus.Processing)]
+    [InlineData(PaymentOrderStatus.Completed)]
+    [InlineData(PaymentOrderStatus.Failed)]
+    [InlineData(PaymentOrderStatus.Cancelled)]
+    public void Cancel_WhenNotDraftOrPending_ShouldPreserveState(
+        PaymentOrderStatus status)
+    {
+        var paymentOrder = CreatePaymentOrderInStatus(status);
+
+        var action = () => paymentOrder.Cancel();
+
+        Assert.Throws<DomainException>(action);
+        Assert.Equal(status, paymentOrder.Status);
+    }
+
     private static PaymentOrder CreateValidPaymentOrder()
     {
-        return PaymentOrder.Create(
-            description: "Pagamento fornecedor",
-            amount: 15000m,
-            currency: "BRL",
-            beneficiary: "Fornecedor XPTO");
+        return PaymentOrder.Create(description: "Pagamento fornecedor", amount: 15000m, currency: "BRL", beneficiary: "Fornecedor XPTO");
     }
 
     private static PaymentOrder CreateProcessingPaymentOrder()
@@ -259,5 +333,48 @@ public class PaymentOrderTests
         paymentOrder.StartProcessing();
 
         return paymentOrder;
+    }
+
+    private static PaymentOrder CreatePaymentOrderInStatus(
+    PaymentOrderStatus status)
+    {
+        var paymentOrder = CreateValidPaymentOrder();
+
+        switch (status)
+        {
+            case PaymentOrderStatus.Draft:
+                return paymentOrder;
+
+            case PaymentOrderStatus.Pending:
+                paymentOrder.Submit();
+                return paymentOrder;
+
+            case PaymentOrderStatus.Processing:
+                paymentOrder.Submit();
+                paymentOrder.StartProcessing();
+                return paymentOrder;
+
+            case PaymentOrderStatus.Completed:
+                paymentOrder.Submit();
+                paymentOrder.StartProcessing();
+                paymentOrder.Complete();
+                return paymentOrder;
+
+            case PaymentOrderStatus.Failed:
+                paymentOrder.Submit();
+                paymentOrder.StartProcessing();
+                paymentOrder.Fail();
+                return paymentOrder;
+
+            case PaymentOrderStatus.Cancelled:
+                paymentOrder.Cancel();
+                return paymentOrder;
+
+            default:
+                throw new ArgumentOutOfRangeException(
+                    nameof(status),
+                    status,
+                    null);
+        }
     }
 }
