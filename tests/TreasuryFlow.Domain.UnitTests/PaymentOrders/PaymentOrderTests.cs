@@ -24,11 +24,7 @@ public class PaymentOrderTests
     [Fact]
     public void Create_WithValidData_ShouldCreateDraftPaymentOrder()
     {
-        var paymentOrder = PaymentOrder.Create(
-            description: "Pagamento fornecedor",
-            amount: 15000m,
-            currency: "BRL",
-            beneficiary: "Fornecedor XPTO");
+        var paymentOrder = CreateValidPaymentOrder();
 
         Assert.NotEqual(Guid.Empty, paymentOrder.Id);
         Assert.Equal("Pagamento fornecedor", paymentOrder.Description);
@@ -83,5 +79,152 @@ public class PaymentOrderTests
             beneficiary);
 
         Assert.Throws<DomainException>(action);
+    }
+
+    [Fact]
+    public void Submit_WhenDraft_ShouldChangeStatusToPending()
+    {
+        var paymentOrder = CreateValidPaymentOrder();
+
+        paymentOrder.Submit();
+
+        Assert.Equal(PaymentOrderStatus.Pending, paymentOrder.Status);
+    }
+
+    [Fact]
+    public void Submit_WhenNotDraft_ShouldThrowDomainException()
+    {
+        var paymentOrder = CreateValidPaymentOrder();
+
+        paymentOrder.Submit();
+
+        var action = () => paymentOrder.Submit();
+
+        Assert.Throws<DomainException>(action);
+    }
+
+    [Fact]
+    public void StartProcessing_WhenPending_ShouldChangeStatusToProcessing()
+    {
+        var paymentOrder = CreateValidPaymentOrder();
+
+        paymentOrder.Submit();
+        paymentOrder.StartProcessing();
+
+        Assert.Equal(PaymentOrderStatus.Processing, paymentOrder.Status);
+    }
+
+    [Fact]
+    public void StartProcessing_WhenNotPending_ShouldThrowDomainException()
+    {
+        var paymentOrder = CreateValidPaymentOrder();
+
+        var action = () => paymentOrder.StartProcessing();
+
+        Assert.Throws<DomainException>(action);
+    }
+
+    [Fact]
+    public void Complete_WhenProcessing_ShouldChangeStatusToCompleted()
+    {
+        var paymentOrder = CreateProcessingPaymentOrder();
+
+        paymentOrder.Complete();
+
+        Assert.Equal(PaymentOrderStatus.Completed, paymentOrder.Status);
+        Assert.NotNull(paymentOrder.ProcessedAt);
+    }
+
+    [Fact]
+    public void Complete_WhenNotProcessing_ShouldThrowDomainException()
+    {
+        var paymentOrder = CreateValidPaymentOrder();
+
+        var action = () => paymentOrder.Complete();
+
+        Assert.Throws<DomainException>(action);
+    }
+
+    [Fact]
+    public void Fail_WhenProcessing_ShouldChangeStatusToFailed()
+    {
+        var paymentOrder = CreateProcessingPaymentOrder();
+
+        paymentOrder.Fail();
+
+        Assert.Equal(PaymentOrderStatus.Failed, paymentOrder.Status);
+        Assert.NotNull(paymentOrder.ProcessedAt);
+    }
+
+    [Fact]
+    public void Fail_WhenNotProcessing_ShouldThrowDomainException()
+    {
+        var paymentOrder = CreateValidPaymentOrder();
+
+        var action = () => paymentOrder.Fail();
+
+        Assert.Throws<DomainException>(action);
+    }
+
+    [Fact]
+    public void Cancel_WhenDraft_ShouldChangeStatusToCancelled()
+    {
+        var paymentOrder = CreateValidPaymentOrder();
+
+        paymentOrder.Cancel();
+
+        Assert.Equal(PaymentOrderStatus.Cancelled, paymentOrder.Status);
+    }
+
+    [Fact]
+    public void Cancel_WhenPending_ShouldChangeStatusToCancelled()
+    {
+        var paymentOrder = CreateValidPaymentOrder();
+
+        paymentOrder.Submit();
+        paymentOrder.Cancel();
+
+        Assert.Equal(PaymentOrderStatus.Cancelled, paymentOrder.Status);
+    }
+
+    [Fact]
+    public void Cancel_WhenProcessing_ShouldThrowDomainException()
+    {
+        var paymentOrder = CreateProcessingPaymentOrder();
+
+        var action = () => paymentOrder.Cancel();
+
+        Assert.Throws<DomainException>(action);
+    }
+
+    [Fact]
+    public void Cancel_WhenCompleted_ShouldThrowDomainException()
+    {
+        var paymentOrder = CreateProcessingPaymentOrder();
+
+        paymentOrder.Complete();
+
+        var action = () => paymentOrder.Cancel();
+
+        Assert.Throws<DomainException>(action);
+    }
+
+    private static PaymentOrder CreateValidPaymentOrder()
+    {
+        return PaymentOrder.Create(
+            description: "Pagamento fornecedor",
+            amount: 15000m,
+            currency: "BRL",
+            beneficiary: "Fornecedor XPTO");
+    }
+
+    private static PaymentOrder CreateProcessingPaymentOrder()
+    {
+        var paymentOrder = CreateValidPaymentOrder();
+
+        paymentOrder.Submit();
+        paymentOrder.StartProcessing();
+
+        return paymentOrder;
     }
 }

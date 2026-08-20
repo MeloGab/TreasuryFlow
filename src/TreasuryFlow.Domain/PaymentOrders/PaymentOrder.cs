@@ -59,4 +59,62 @@ public class PaymentOrder
             money,
             beneficiary);
     }
+
+    public void Submit()
+    {
+        if (Status != PaymentOrderStatus.Draft)
+        {
+            throw new DomainException(
+                "Only draft payment orders can be submitted.");
+        }
+
+        Status = PaymentOrderStatus.Pending;
+    }
+
+    public void StartProcessing()
+    {
+        if (Status != PaymentOrderStatus.Pending)
+        {
+            throw new DomainException(
+                "Only pending payment orders can start processing.");
+        }
+
+        Status = PaymentOrderStatus.Processing;
+    }
+
+    public void Complete()
+    {
+        if (Status != PaymentOrderStatus.Processing)
+        {
+            throw new DomainException(
+                "Only processing payment orders can be completed.");
+        }
+
+        Status = PaymentOrderStatus.Completed;
+        ProcessedAt = DateTime.UtcNow;
+    }
+
+    public void Fail()
+    {
+        if (Status != PaymentOrderStatus.Processing)
+        {
+            throw new DomainException(
+                "Only processing payment orders can fail.");
+        }
+
+        Status = PaymentOrderStatus.Failed;
+        ProcessedAt = DateTime.UtcNow;
+    }
+
+    public void Cancel()
+    {
+        if (Status != PaymentOrderStatus.Draft &&
+            Status != PaymentOrderStatus.Pending)
+        {
+            throw new DomainException(
+                "Only draft or pending payment orders can be cancelled.");
+        }
+
+        Status = PaymentOrderStatus.Cancelled;
+    }
 }
