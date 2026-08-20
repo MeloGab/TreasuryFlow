@@ -1,5 +1,6 @@
 using TreasuryFlow.Domain.Common.Exceptions;
 using TreasuryFlow.Domain.PaymentOrders;
+using TreasuryFlow.Domain.PaymentOrders.Events;
 
 namespace TreasuryFlow.Domain.UnitTests.PaymentOrders;
 
@@ -207,6 +208,38 @@ public class PaymentOrderTests
         var action = () => paymentOrder.Cancel();
 
         Assert.Throws<DomainException>(action);
+    }
+
+    [Fact]
+    public void Submit_WhenDraft_ShouldRaisePaymentOrderSubmittedDomainEvent()
+    {
+        var paymentOrder = CreateValidPaymentOrder();
+
+        paymentOrder.Submit();
+
+        var domainEvent = Assert.Single(paymentOrder.DomainEvents);
+
+        var submittedEvent =
+            Assert.IsType<PaymentOrderSubmittedDomainEvent>(domainEvent);
+
+        Assert.Equal(paymentOrder.Id, submittedEvent.PaymentOrderId);
+        Assert.Equal(paymentOrder.Amount.Value, submittedEvent.Amount);
+        Assert.Equal(paymentOrder.Amount.Currency, submittedEvent.Currency);
+        Assert.NotEqual(default, submittedEvent.OccurredAt);
+    }
+
+    [Fact]
+    public void ClearDomainEvents_ShouldRemoveAllDomainEvents()
+    {
+        var paymentOrder = CreateValidPaymentOrder();
+
+        paymentOrder.Submit();
+
+        Assert.NotEmpty(paymentOrder.DomainEvents);
+
+        paymentOrder.ClearDomainEvents();
+
+        Assert.Empty(paymentOrder.DomainEvents);
     }
 
     private static PaymentOrder CreateValidPaymentOrder()

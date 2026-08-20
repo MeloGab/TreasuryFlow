@@ -1,10 +1,14 @@
+using TreasuryFlow.Domain.Common.Events;
 using TreasuryFlow.Domain.Common.Exceptions;
+using TreasuryFlow.Domain.PaymentOrders.Events;
 using TreasuryFlow.Domain.PaymentOrders.ValueObjects;
 
 namespace TreasuryFlow.Domain.PaymentOrders;
 
 public class PaymentOrder
 {
+    private readonly List<IDomainEvent> _domainEvents = [];
+
     public Guid Id { get; private set; }
 
     public string Description { get; private set; }
@@ -18,6 +22,9 @@ public class PaymentOrder
     public DateTime CreatedAt { get; private set; }
 
     public DateTime? ProcessedAt { get; private set; }
+
+    public IReadOnlyCollection<IDomainEvent> DomainEvents =>
+        _domainEvents.AsReadOnly();
 
     private PaymentOrder(
         string description,
@@ -69,6 +76,13 @@ public class PaymentOrder
         }
 
         Status = PaymentOrderStatus.Pending;
+
+        AddDomainEvent(
+            new PaymentOrderSubmittedDomainEvent(
+                Id,
+                Amount.Value,
+                Amount.Currency,
+                DateTime.UtcNow));
     }
 
     public void StartProcessing()
@@ -116,5 +130,15 @@ public class PaymentOrder
         }
 
         Status = PaymentOrderStatus.Cancelled;
+    }
+
+    public void ClearDomainEvents()
+    {
+        _domainEvents.Clear();
+    }
+
+    private void AddDomainEvent(IDomainEvent domainEvent)
+    {
+        _domainEvents.Add(domainEvent);
     }
 }
