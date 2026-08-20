@@ -4,7 +4,7 @@ Projeto de estudo de arquitetura de software e desenvolvimento enterprise com .N
 
 ## Objetivo
 
-Construir uma aplicaÁ„o de processamento de ordens de pagamento utilizando conceitos e tecnologias como:
+Construir uma aplicaÔøΩÔøΩo de processamento de ordens de pagamento utilizando conceitos e tecnologias como:
 
 - Clean Architecture
 - Domain-Driven Design (DDD)
@@ -17,6 +17,18 @@ Construir uma aplicaÁ„o de processamento de ordens de pagamento utilizando conce
 - Docker
 - GitHub Actions
 - Angular
+
+## Escopo monet√°rio inicial
+
+Nesta primeira vers√£o, o TreasuryFlow suporta ordens de pagamento nas moedas:
+
+- BRL
+- USD
+- EUR
+
+Os valores monet√°rios devem ser maiores que zero e possuir no m√°ximo duas casas decimais.
+
+Esse √© o escopo inicial do dom√≠nio e poder√° ser expandido conforme novas necessidades do projeto.
 
 ## Status
 
