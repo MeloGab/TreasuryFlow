@@ -1,4 +1,5 @@
 using FluentValidation;
+using TreasuryFlow.Domain.PaymentOrders.ValueObjects;
 
 namespace TreasuryFlow.Application.PaymentOrders.Commands.CreatePaymentOrder;
 
@@ -25,7 +26,10 @@ public sealed class CreatePaymentOrderCommandValidator
             .WithMessage("Currency is required.")
             .Must(BeValidThreeLetterCurrencyCode)
             .WithMessage(
-                "Currency must be a valid three-letter code.");
+                "Currency must be a valid three-letter code.")
+            .Must(Money.IsSupportedCurrency)
+            .WithMessage(
+                "Currency is not supported.");
 
         RuleFor(command => command.Beneficiary)
             .NotEmpty()

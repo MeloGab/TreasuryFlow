@@ -11,6 +11,22 @@ public sealed record Money
         "EUR"
     ];
 
+    public static bool IsSupportedCurrency(
+    string? currency)
+    {
+        if (string.IsNullOrWhiteSpace(currency))
+        {
+            return false;
+        }
+
+        var normalizedCurrency = currency
+            .Trim()
+            .ToUpperInvariant();
+
+        return SupportedCurrencies.Contains(
+            normalizedCurrency);
+    }
+
     public decimal Value { get; }
 
     public string Currency { get; }
@@ -56,7 +72,7 @@ public sealed record Money
                 "Money currency must be a valid three-letter code.");
         }
 
-        if (!SupportedCurrencies.Contains(normalizedCurrency))
+        if (!IsSupportedCurrency(normalizedCurrency))
         {
             throw new DomainException(
                 $"Currency '{normalizedCurrency}' is not supported.");

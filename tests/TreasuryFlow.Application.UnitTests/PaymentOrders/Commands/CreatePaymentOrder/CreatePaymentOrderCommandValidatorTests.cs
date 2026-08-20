@@ -181,6 +181,28 @@ public class CreatePaymentOrderCommandValidatorTests
             error.ErrorMessage);
     }
 
+    [Theory]
+    [InlineData("JPY")]
+    [InlineData("GBP")]
+    public void Validate_WithUnsupportedCurrency_ShouldHaveValidationError(
+        string currency)
+    {
+        var command = CreateValidCommand() with
+        {
+            Currency = currency
+        };
+
+        var result = _validator.Validate(command);
+
+        var error = Assert.Single(
+            result.Errors,
+            error => error.PropertyName ==
+                nameof(CreatePaymentOrderCommand.Currency));
+
+        Assert.Equal(
+            "Currency is not supported.",
+            error.ErrorMessage);
+    }
     private static CreatePaymentOrderCommand CreateValidCommand()
     {
         return new CreatePaymentOrderCommand(
