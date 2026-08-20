@@ -1,4 +1,5 @@
 using TreasuryFlow.Domain.Common.Exceptions;
+using TreasuryFlow.Domain.PaymentOrders.ValueObjects;
 
 namespace TreasuryFlow.Domain.PaymentOrders;
 
@@ -8,9 +9,7 @@ public class PaymentOrder
 
     public string Description { get; private set; }
 
-    public decimal Amount { get; private set; }
-
-    public string Currency { get; private set; }
+    public Money Amount { get; private set; }
 
     public string Beneficiary { get; private set; }
 
@@ -22,14 +21,12 @@ public class PaymentOrder
 
     private PaymentOrder(
         string description,
-        decimal amount,
-        string currency,
+        Money amount,
         string beneficiary)
     {
         Id = Guid.NewGuid();
         Description = description;
         Amount = amount;
-        Currency = currency;
         Beneficiary = beneficiary;
         Status = PaymentOrderStatus.Draft;
         CreatedAt = DateTime.UtcNow;
@@ -41,22 +38,10 @@ public class PaymentOrder
         string currency,
         string beneficiary)
     {
-        if (amount <= 0)
-        {
-            throw new DomainException(
-                "Payment order amount must be greater than zero.");
-        }
-
         if (string.IsNullOrWhiteSpace(description))
         {
             throw new DomainException(
                 "Payment order description is required.");
-        }
-
-        if (string.IsNullOrWhiteSpace(currency))
-        {
-            throw new DomainException(
-                "Payment order currency is required.");
         }
 
         if (string.IsNullOrWhiteSpace(beneficiary))
@@ -65,10 +50,13 @@ public class PaymentOrder
                 "Payment order beneficiary is required.");
         }
 
+        var money = Money.Create(
+            amount,
+            currency);
+
         return new PaymentOrder(
             description,
-            amount,
-            currency,
+            money,
             beneficiary);
     }
 }

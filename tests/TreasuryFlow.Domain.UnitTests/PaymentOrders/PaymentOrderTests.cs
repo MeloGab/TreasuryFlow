@@ -26,14 +26,14 @@ public class PaymentOrderTests
     {
         var paymentOrder = PaymentOrder.Create(
             description: "Pagamento fornecedor",
-            amount: 15000,
+            amount: 15000m,
             currency: "BRL",
             beneficiary: "Fornecedor XPTO");
 
         Assert.NotEqual(Guid.Empty, paymentOrder.Id);
         Assert.Equal("Pagamento fornecedor", paymentOrder.Description);
-        Assert.Equal(15000, paymentOrder.Amount);
-        Assert.Equal("BRL", paymentOrder.Currency);
+        Assert.Equal(15000m, paymentOrder.Amount.Value);
+        Assert.Equal("BRL", paymentOrder.Amount.Currency);
         Assert.Equal("Fornecedor XPTO", paymentOrder.Beneficiary);
         Assert.Equal(PaymentOrderStatus.Draft, paymentOrder.Status);
         Assert.NotEqual(default, paymentOrder.CreatedAt);
@@ -44,11 +44,11 @@ public class PaymentOrderTests
     [InlineData("")]
     [InlineData(" ")]
     public void Create_WithoutDescription_ShouldThrowDomainException(
-    string description)
+        string description)
     {
         var action = () => PaymentOrder.Create(
             description,
-            15000,
+            15000m,
             "BRL",
             "Fornecedor XPTO");
 
@@ -63,7 +63,7 @@ public class PaymentOrderTests
     {
         var action = () => PaymentOrder.Create(
             "Pagamento fornecedor",
-            15000,
+            15000m,
             currency,
             "Fornecedor XPTO");
 
@@ -78,11 +78,10 @@ public class PaymentOrderTests
     {
         var action = () => PaymentOrder.Create(
             "Pagamento fornecedor",
-            15000,
+            15000m,
             "BRL",
             beneficiary);
 
         Assert.Throws<DomainException>(action);
     }
-
 }
