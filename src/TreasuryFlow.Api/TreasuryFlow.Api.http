@@ -1,6 +1,0 @@
-@TreasuryFlow.Api_HostAddress = http://localhost:5094
-
-GET {{TreasuryFlow.Api_HostAddress}}/weatherforecast/
-Accept: application/json
-
-###
