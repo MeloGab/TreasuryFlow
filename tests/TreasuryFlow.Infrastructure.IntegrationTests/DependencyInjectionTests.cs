@@ -45,4 +45,37 @@ public sealed class DependencyInjectionTests
         Assert.IsType<PaymentOrderRepository>(
             repository);
     }
+
+    [Fact]
+    public void AddInfrastructure_WithConnectionString_ShouldConfigureSqlServer()
+    {
+        const string connectionString =
+            "Server=localhost;" +
+            "Database=TreasuryFlow;" +
+            "Trusted_Connection=True;" +
+            "TrustServerCertificate=True";
+
+        var services = new ServiceCollection();
+
+        var result = services.AddInfrastructure(
+            connectionString);
+
+        using var serviceProvider =
+            services.BuildServiceProvider();
+
+        using var scope =
+            serviceProvider.CreateScope();
+
+        var dbContext =
+            scope.ServiceProvider
+                .GetRequiredService<TreasuryFlowDbContext>();
+
+        Assert.Same(
+            services,
+            result);
+
+        Assert.Equal(
+            "Microsoft.EntityFrameworkCore.SqlServer",
+            dbContext.Database.ProviderName);
+    }
 }

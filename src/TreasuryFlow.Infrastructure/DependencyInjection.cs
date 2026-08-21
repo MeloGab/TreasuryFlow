@@ -10,6 +10,16 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddInfrastructure(
         this IServiceCollection services,
+        string connectionString)
+    {
+        return services.AddInfrastructure(
+            dbContextOptions =>
+                dbContextOptions.UseSqlServer(
+                    connectionString));
+    }
+
+    public static IServiceCollection AddInfrastructure(
+        this IServiceCollection services,
         Action<DbContextOptionsBuilder> configureDbContext)
     {
         services.AddDbContext<TreasuryFlowDbContext>(
