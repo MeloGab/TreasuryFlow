@@ -19,6 +19,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TreasuryFlow.Domain.UnitTes
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TreasuryFlow.Application.UnitTests", "tests\TreasuryFlow.Application.UnitTests\TreasuryFlow.Application.UnitTests.csproj", "{7DF00897-89C9-48D6-BD2F-B58021D53D02}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TreasuryFlow.Infrastructure.IntegrationTests", "tests\TreasuryFlow.Infrastructure.IntegrationTests\TreasuryFlow.Infrastructure.IntegrationTests.csproj", "{92B388FB-5D52-4DD8-9FE1-FC19B3CD508C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -101,6 +103,18 @@ Global
 		{7DF00897-89C9-48D6-BD2F-B58021D53D02}.Release|x64.Build.0 = Release|Any CPU
 		{7DF00897-89C9-48D6-BD2F-B58021D53D02}.Release|x86.ActiveCfg = Release|Any CPU
 		{7DF00897-89C9-48D6-BD2F-B58021D53D02}.Release|x86.Build.0 = Release|Any CPU
+		{92B388FB-5D52-4DD8-9FE1-FC19B3CD508C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{92B388FB-5D52-4DD8-9FE1-FC19B3CD508C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{92B388FB-5D52-4DD8-9FE1-FC19B3CD508C}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{92B388FB-5D52-4DD8-9FE1-FC19B3CD508C}.Debug|x64.Build.0 = Debug|Any CPU
+		{92B388FB-5D52-4DD8-9FE1-FC19B3CD508C}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{92B388FB-5D52-4DD8-9FE1-FC19B3CD508C}.Debug|x86.Build.0 = Debug|Any CPU
+		{92B388FB-5D52-4DD8-9FE1-FC19B3CD508C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{92B388FB-5D52-4DD8-9FE1-FC19B3CD508C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{92B388FB-5D52-4DD8-9FE1-FC19B3CD508C}.Release|x64.ActiveCfg = Release|Any CPU
+		{92B388FB-5D52-4DD8-9FE1-FC19B3CD508C}.Release|x64.Build.0 = Release|Any CPU
+		{92B388FB-5D52-4DD8-9FE1-FC19B3CD508C}.Release|x86.ActiveCfg = Release|Any CPU
+		{92B388FB-5D52-4DD8-9FE1-FC19B3CD508C}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -112,5 +126,6 @@ Global
 		{373D2009-5076-40D6-9213-502C63801918} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 		{BD58047A-8547-4835-831C-B5C8EAA79168} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
 		{7DF00897-89C9-48D6-BD2F-B58021D53D02} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
+		{92B388FB-5D52-4DD8-9FE1-FC19B3CD508C} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
 	EndGlobalSection
 EndGlobal
