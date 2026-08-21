@@ -11,8 +11,25 @@ public sealed record Money
         "EUR"
     ];
 
+    public decimal Value { get; private set; }
+
+    public string Currency { get; private set; }
+
+    private Money()
+    {
+        Currency = null!;
+    }
+
+    private Money(
+        decimal value,
+        string currency)
+    {
+        Value = value;
+        Currency = currency;
+    }
+
     public static bool IsSupportedCurrency(
-    string? currency)
+        string? currency)
     {
         if (string.IsNullOrWhiteSpace(currency))
         {
@@ -25,18 +42,6 @@ public sealed record Money
 
         return SupportedCurrencies.Contains(
             normalizedCurrency);
-    }
-
-    public decimal Value { get; }
-
-    public string Currency { get; }
-
-    private Money(
-        decimal value,
-        string currency)
-    {
-        Value = value;
-        Currency = currency;
     }
 
     public static Money Create(
