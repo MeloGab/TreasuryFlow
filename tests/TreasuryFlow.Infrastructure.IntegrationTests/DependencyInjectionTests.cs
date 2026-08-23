@@ -1,7 +1,7 @@
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using TreasuryFlow.Application.PaymentOrders.Repositories;
+using TreasuryFlow.Domain.PaymentOrders.Repositories;
 using TreasuryFlow.Infrastructure.Persistence;
 using TreasuryFlow.Infrastructure.Persistence.Repositories;
 

@@ -1,6 +1,6 @@
 using MediatR;
-using TreasuryFlow.Application.PaymentOrders.Repositories;
 using TreasuryFlow.Domain.PaymentOrders;
+using TreasuryFlow.Domain.PaymentOrders.Repositories;
 
 namespace TreasuryFlow.Application.PaymentOrders.Commands.CreatePaymentOrder;
 
