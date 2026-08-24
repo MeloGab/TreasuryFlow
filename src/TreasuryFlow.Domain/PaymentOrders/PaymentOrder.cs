@@ -26,7 +26,17 @@ public class PaymentOrder
     public IReadOnlyCollection<IDomainEvent> DomainEvents =>
         _domainEvents.AsReadOnly();
 
-    private PaymentOrder( string description, Money amount, string beneficiary)
+    private PaymentOrder()
+    {
+        Description = null!;
+        Amount = null!;
+        Beneficiary = null!;
+    }
+
+    private PaymentOrder(
+        string description,
+        Money amount,
+        string beneficiary)
     {
         Id = Guid.NewGuid();
         Description = description;
@@ -36,23 +46,41 @@ public class PaymentOrder
         CreatedAt = DateTime.UtcNow;
     }
 
-    public static PaymentOrder Create( string description, decimal amount, string currency, string beneficiary)
+    public static PaymentOrder Create(
+        string description,
+        decimal amount,
+        string currency,
+        string beneficiary)
     {
         if (string.IsNullOrWhiteSpace(description))
-            throw new DomainException("Payment order description is required.");
+        {
+            throw new DomainException(
+                "Payment order description is required.");
+        }
 
         if (string.IsNullOrWhiteSpace(beneficiary))
-            throw new DomainException("Payment order beneficiary is required.");
+        {
+            throw new DomainException(
+                "Payment order beneficiary is required.");
+        }
 
-        var money = Money.Create(amount, currency);
+        var money = Money.Create(
+            amount,
+            currency);
 
-        return new PaymentOrder( description, money, beneficiary);
+        return new PaymentOrder(
+            description,
+            money,
+            beneficiary);
     }
 
     public void Submit()
     {
         if (Status != PaymentOrderStatus.Draft)
-            throw new DomainException("Only draft payment orders can be submitted.");
+        {
+            throw new DomainException(
+                "Only draft payment orders can be submitted.");
+        }
 
         Status = PaymentOrderStatus.Pending;
 
@@ -67,7 +95,10 @@ public class PaymentOrder
     public void StartProcessing()
     {
         if (Status != PaymentOrderStatus.Pending)
-            throw new DomainException("Only pending payment orders can start processing.");
+        {
+            throw new DomainException(
+                "Only pending payment orders can start processing.");
+        }
 
         Status = PaymentOrderStatus.Processing;
     }
@@ -75,7 +106,10 @@ public class PaymentOrder
     public void Complete()
     {
         if (Status != PaymentOrderStatus.Processing)
-            throw new DomainException("Only processing payment orders can be completed.");
+        {
+            throw new DomainException(
+                "Only processing payment orders can be completed.");
+        }
 
         Status = PaymentOrderStatus.Completed;
         ProcessedAt = DateTime.UtcNow;
@@ -84,7 +118,10 @@ public class PaymentOrder
     public void Fail()
     {
         if (Status != PaymentOrderStatus.Processing)
-            throw new DomainException("Only processing payment orders can fail.");
+        {
+            throw new DomainException(
+                "Only processing payment orders can fail.");
+        }
 
         Status = PaymentOrderStatus.Failed;
         ProcessedAt = DateTime.UtcNow;
@@ -94,7 +131,10 @@ public class PaymentOrder
     {
         if (Status != PaymentOrderStatus.Draft &&
             Status != PaymentOrderStatus.Pending)
-            throw new DomainException("Only draft or pending payment orders can be cancelled.");
+        {
+            throw new DomainException(
+                "Only draft or pending payment orders can be cancelled.");
+        }
 
         Status = PaymentOrderStatus.Cancelled;
     }
@@ -104,7 +144,8 @@ public class PaymentOrder
         _domainEvents.Clear();
     }
 
-    private void AddDomainEvent(IDomainEvent domainEvent)
+    private void AddDomainEvent(
+        IDomainEvent domainEvent)
     {
         _domainEvents.Add(domainEvent);
     }

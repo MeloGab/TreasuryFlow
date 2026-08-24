@@ -2,8 +2,8 @@ using FluentValidation;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 using TreasuryFlow.Application.PaymentOrders.Commands.CreatePaymentOrder;
-using TreasuryFlow.Application.PaymentOrders.Repositories;
 using TreasuryFlow.Domain.PaymentOrders;
+using TreasuryFlow.Domain.PaymentOrders.Repositories;
 
 namespace TreasuryFlow.Application.UnitTests.PaymentOrders.Commands.CreatePaymentOrder;
 

@@ -1,8 +1,22 @@
 using TreasuryFlow.Application;
+using TreasuryFlow.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
 
+var connectionString =
+    builder.Configuration.GetConnectionString(
+        "TreasuryFlow");
+
+if (string.IsNullOrWhiteSpace(connectionString))
+{
+    throw new InvalidOperationException(
+        "Connection string 'TreasuryFlow' is required.");
+}
+
 builder.Services.AddApplication();
+
+builder.Services.AddInfrastructure(
+    connectionString);
 
 builder.Services.AddControllers();
 

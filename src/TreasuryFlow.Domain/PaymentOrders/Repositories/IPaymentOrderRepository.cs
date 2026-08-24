@@ -1,6 +1,4 @@
-using TreasuryFlow.Domain.PaymentOrders;
-
-namespace TreasuryFlow.Application.PaymentOrders.Repositories;
+namespace TreasuryFlow.Domain.PaymentOrders.Repositories;
 
 public interface IPaymentOrderRepository
 {
