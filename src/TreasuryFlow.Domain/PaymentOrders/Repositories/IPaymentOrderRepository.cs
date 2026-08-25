@@ -9,4 +9,8 @@ public interface IPaymentOrderRepository
     Task AddAsync(
         PaymentOrder paymentOrder,
         CancellationToken cancellationToken = default);
+
+    Task UpdateAsync(
+        PaymentOrder paymentOrder,
+        CancellationToken cancellationToken = default);
 }

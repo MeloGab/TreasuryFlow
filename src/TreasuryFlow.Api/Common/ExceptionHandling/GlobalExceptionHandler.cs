@@ -1,5 +1,7 @@
 using FluentValidation;
 using Microsoft.AspNetCore.Diagnostics;
+using TreasuryFlow.Application.Common.Exceptions;
+using TreasuryFlow.Domain.Common.Exceptions;
 
 namespace TreasuryFlow.Api.Common.ExceptionHandling;
 
@@ -17,6 +19,28 @@ public sealed class GlobalExceptionHandler(
             await WriteValidationProblemAsync(
                 httpContext,
                 validationException);
+
+            return true;
+        }
+
+        if (exception is PaymentOrderNotFoundException notFoundException)
+        {
+            await Results.Problem(
+                    statusCode: StatusCodes.Status404NotFound,
+                    title: "Payment order not found.",
+                    detail: notFoundException.Message)
+                .ExecuteAsync(httpContext);
+
+            return true;
+        }
+
+        if (exception is DomainException domainException)
+        {
+            await Results.Problem(
+                    statusCode: StatusCodes.Status409Conflict,
+                    title: "A domain rule was violated.",
+                    detail: domainException.Message)
+                .ExecuteAsync(httpContext);
 
             return true;
         }

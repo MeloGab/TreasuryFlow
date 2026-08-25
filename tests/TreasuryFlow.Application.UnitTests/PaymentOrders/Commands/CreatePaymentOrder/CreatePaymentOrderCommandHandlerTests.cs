@@ -87,5 +87,12 @@ public class CreatePaymentOrderCommandHandlerTests
 
             return Task.CompletedTask;
         }
+
+        public Task UpdateAsync(
+            PaymentOrder paymentOrder,
+            CancellationToken cancellationToken = default)
+        {
+            return Task.CompletedTask;
+        }
     }
 }

@@ -2,6 +2,7 @@ using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using TreasuryFlow.Api.Contracts.PaymentOrders;
 using TreasuryFlow.Application.PaymentOrders.Commands.CreatePaymentOrder;
+using TreasuryFlow.Application.PaymentOrders.Commands.Lifecycle;
 using TreasuryFlow.Application.PaymentOrders.Queries.GetPaymentOrderById;
 
 namespace TreasuryFlow.Api.Controllers;
@@ -81,5 +82,100 @@ public sealed class PaymentOrdersController(
             nameof(GetById),
             new { id = paymentOrderId },
             response);
+    }
+
+    [HttpPost("{id:guid}/submit")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType<ProblemDetails>(
+        StatusCodes.Status404NotFound)]
+    [ProducesResponseType<ProblemDetails>(
+        StatusCodes.Status409Conflict)]
+    [ProducesResponseType<ProblemDetails>(
+        StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> Submit(
+        Guid id,
+        CancellationToken cancellationToken)
+    {
+        await sender.Send(
+            new SubmitPaymentOrderCommand(id),
+            cancellationToken);
+
+        return NoContent();
+    }
+
+    [HttpPost("{id:guid}/start-processing")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType<ProblemDetails>(
+        StatusCodes.Status404NotFound)]
+    [ProducesResponseType<ProblemDetails>(
+        StatusCodes.Status409Conflict)]
+    [ProducesResponseType<ProblemDetails>(
+        StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> StartProcessing(
+        Guid id,
+        CancellationToken cancellationToken)
+    {
+        await sender.Send(
+            new StartProcessingPaymentOrderCommand(id),
+            cancellationToken);
+
+        return NoContent();
+    }
+
+    [HttpPost("{id:guid}/complete")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType<ProblemDetails>(
+        StatusCodes.Status404NotFound)]
+    [ProducesResponseType<ProblemDetails>(
+        StatusCodes.Status409Conflict)]
+    [ProducesResponseType<ProblemDetails>(
+        StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> Complete(
+        Guid id,
+        CancellationToken cancellationToken)
+    {
+        await sender.Send(
+            new CompletePaymentOrderCommand(id),
+            cancellationToken);
+
+        return NoContent();
+    }
+
+    [HttpPost("{id:guid}/fail")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType<ProblemDetails>(
+        StatusCodes.Status404NotFound)]
+    [ProducesResponseType<ProblemDetails>(
+        StatusCodes.Status409Conflict)]
+    [ProducesResponseType<ProblemDetails>(
+        StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> Fail(
+        Guid id,
+        CancellationToken cancellationToken)
+    {
+        await sender.Send(
+            new FailPaymentOrderCommand(id),
+            cancellationToken);
+
+        return NoContent();
+    }
+
+    [HttpPost("{id:guid}/cancel")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType<ProblemDetails>(
+        StatusCodes.Status404NotFound)]
+    [ProducesResponseType<ProblemDetails>(
+        StatusCodes.Status409Conflict)]
+    [ProducesResponseType<ProblemDetails>(
+        StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> Cancel(
+        Guid id,
+        CancellationToken cancellationToken)
+    {
+        await sender.Send(
+            new CancelPaymentOrderCommand(id),
+            cancellationToken);
+
+        return NoContent();
     }
 }
