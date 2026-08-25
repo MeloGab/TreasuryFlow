@@ -2,6 +2,7 @@ using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using TreasuryFlow.Api.Contracts.PaymentOrders;
 using TreasuryFlow.Application.PaymentOrders.Commands.CreatePaymentOrder;
+using TreasuryFlow.Application.PaymentOrders.Queries.GetPaymentOrderById;
 
 namespace TreasuryFlow.Api.Controllers;
 
@@ -11,6 +12,47 @@ public sealed class PaymentOrdersController(
     ISender sender)
     : ControllerBase
 {
+    [HttpGet("{id:guid}")]
+    [ProducesResponseType<GetPaymentOrderByIdResponse>(
+        StatusCodes.Status200OK)]
+    [ProducesResponseType<ProblemDetails>(
+        StatusCodes.Status404NotFound)]
+    [ProducesResponseType<ProblemDetails>(
+        StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> GetById(
+        Guid id,
+        CancellationToken cancellationToken)
+    {
+        var query = new GetPaymentOrderByIdQuery(
+            id);
+
+        var result = await sender.Send(
+            query,
+            cancellationToken);
+
+        if (result is null)
+        {
+            return Problem(
+                statusCode: StatusCodes.Status404NotFound,
+                title: "Payment order not found.",
+                detail:
+                    $"No payment order was found with id '{id}'.");
+        }
+
+        var response = new GetPaymentOrderByIdResponse(
+            result.Id,
+            result.Description,
+            result.Amount,
+            result.Currency,
+            result.Beneficiary,
+            result.Status.ToString(),
+            result.CreatedAt,
+            result.ProcessedAt);
+
+        return Ok(
+            response);
+    }
+
     [HttpPost]
     [ProducesResponseType<CreatePaymentOrderResponse>(
         StatusCodes.Status201Created)]
@@ -35,8 +77,9 @@ public sealed class PaymentOrdersController(
         var response = new CreatePaymentOrderResponse(
             paymentOrderId);
 
-        return Created(
-            $"/api/payment-orders/{paymentOrderId}",
+        return CreatedAtAction(
+            nameof(GetById),
+            new { id = paymentOrderId },
             response);
     }
 }

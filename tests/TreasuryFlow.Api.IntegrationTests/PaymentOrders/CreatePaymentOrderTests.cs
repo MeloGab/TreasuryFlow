@@ -44,8 +44,10 @@ public sealed class CreatePaymentOrderTests(
             response.Id);
 
         Assert.Equal(
-            $"/api/payment-orders/{response.Id}",
-            httpResponse.Headers.Location?.OriginalString);
+            new Uri(
+                client.BaseAddress!,
+                $"/api/payment-orders/{response.Id}"),
+            httpResponse.Headers.Location);
 
         using var scope = factory.Services.CreateScope();
 
