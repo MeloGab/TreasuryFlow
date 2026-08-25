@@ -1,10 +1,12 @@
 using System.Net;
 using System.Net.Http.Json;
+using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using TreasuryFlow.Domain.PaymentOrders;
 using TreasuryFlow.Infrastructure.Persistence;
+using TreasuryFlow.Infrastructure.Persistence.Outbox;
 
 namespace TreasuryFlow.Api.IntegrationTests.PaymentOrders;
 
@@ -55,6 +57,9 @@ public sealed class PaymentOrderLifecycleTests(
 
         Assert.NotNull(
             persistedPaymentOrder.ProcessedAt);
+
+        await AssertSingleSubmissionOutboxMessageAsync(
+            paymentOrder.Id);
     }
 
     [Fact]
@@ -243,5 +248,28 @@ public sealed class PaymentOrderLifecycleTests(
             .SingleAsync(
                 paymentOrder =>
                     paymentOrder.Id == paymentOrderId);
+    }
+
+    private async Task AssertSingleSubmissionOutboxMessageAsync(
+        Guid paymentOrderId)
+    {
+        using var scope = factory.Services.CreateScope();
+
+        var dbContext = scope.ServiceProvider
+            .GetRequiredService<TreasuryFlowDbContext>();
+
+        var outboxMessage = await dbContext
+            .Set<OutboxMessage>()
+            .AsNoTracking()
+            .SingleAsync();
+
+        using var content = JsonDocument.Parse(
+            outboxMessage.Content);
+
+        Assert.Equal(
+            paymentOrderId,
+            content.RootElement
+                .GetProperty("PaymentOrderId")
+                .GetGuid());
     }
 }
