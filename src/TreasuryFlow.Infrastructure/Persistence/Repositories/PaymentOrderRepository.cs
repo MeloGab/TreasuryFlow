@@ -30,4 +30,15 @@ public sealed class PaymentOrderRepository(
         await dbContext.SaveChangesAsync(
             cancellationToken);
     }
+
+    public async Task UpdateAsync(
+        PaymentOrder paymentOrder,
+        CancellationToken cancellationToken = default)
+    {
+        dbContext.PaymentOrders.Update(
+            paymentOrder);
+
+        await dbContext.SaveChangesAsync(
+            cancellationToken);
+    }
 }
