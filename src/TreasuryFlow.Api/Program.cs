@@ -1,3 +1,4 @@
+using TreasuryFlow.Api.Common.ExceptionHandling;
 using TreasuryFlow.Application;
 using TreasuryFlow.Infrastructure;
 
@@ -20,6 +21,10 @@ builder.Services.AddInfrastructure(
 
 builder.Services.AddControllers();
 
+builder.Services.AddProblemDetails();
+
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+
 builder.Services.AddOpenApi();
 
 var app = builder.Build();
@@ -29,6 +34,8 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 }
 
+app.UseExceptionHandler();
+
 app.UseHttpsRedirection();
 
 app.UseAuthorization();
@@ -36,3 +43,5 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+
+public partial class Program;

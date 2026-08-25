@@ -127,6 +127,13 @@ public class CreatePaymentOrderPipelineTests
     {
         public List<PaymentOrder> PaymentOrders { get; } = [];
 
+        public Task<PaymentOrder?> GetByIdAsync(
+            Guid id,
+            CancellationToken cancellationToken = default)
+        {
+            return Task.FromResult<PaymentOrder?>(null);
+        }
+
         public Task AddAsync(
             PaymentOrder paymentOrder,
             CancellationToken cancellationToken = default)
