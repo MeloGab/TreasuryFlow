@@ -38,7 +38,19 @@ public sealed class OutboxMessageConfiguration
         builder.Property(
             message => message.Error);
 
+        builder.Property(
+                message => message.RetryCount)
+            .IsRequired();
+
+        builder.Property(
+            message => message.NextAttemptAt);
+
         builder.HasIndex(
-            message => message.ProcessedAt);
+            message => new
+            {
+                message.ProcessedAt,
+                message.NextAttemptAt,
+                message.OccurredAt
+            });
     }
 }

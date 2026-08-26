@@ -17,7 +17,8 @@ if (string.IsNullOrWhiteSpace(connectionString))
 builder.Services.AddApplication();
 
 builder.Services.AddInfrastructure(
-    connectionString);
+    connectionString,
+    builder.Configuration);
 
 builder.Services.AddControllers();
 

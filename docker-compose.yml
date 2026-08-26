@@ -31,5 +31,30 @@ services:
       start_period: 90s
     restart: unless-stopped
 
+  rabbitmq:
+    image: rabbitmq:4.3.5-management-alpine
+    container_name: treasuryflow-rabbitmq
+    hostname: treasuryflow-rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: "${RABBITMQ_DEFAULT_USER:?Set RABBITMQ_DEFAULT_USER in the .env file}"
+      RABBITMQ_DEFAULT_PASS: "${RABBITMQ_DEFAULT_PASS:?Set RABBITMQ_DEFAULT_PASS in the .env file}"
+    ports:
+      - "127.0.0.1:5672:5672"
+      - "127.0.0.1:15672:15672"
+    volumes:
+      - treasuryflow-rabbitmq-data:/var/lib/rabbitmq
+    healthcheck:
+      test:
+        - CMD
+        - rabbitmq-diagnostics
+        - -q
+        - ping
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+    restart: unless-stopped
+
 volumes:
   treasuryflow-sqlserver-data:
+  treasuryflow-rabbitmq-data:
