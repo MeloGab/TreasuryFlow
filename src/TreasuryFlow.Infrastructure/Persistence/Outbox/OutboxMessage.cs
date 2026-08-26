@@ -14,6 +14,10 @@ public sealed class OutboxMessage
 
     public string? Error { get; private set; }
 
+    public int RetryCount { get; private set; }
+
+    public DateTime? NextAttemptAt { get; private set; }
+
     private OutboxMessage()
     {
         Type = null!;
@@ -30,5 +34,22 @@ public sealed class OutboxMessage
         Type = type;
         Content = content;
         OccurredAt = occurredAt;
+    }
+
+    public void MarkAsProcessed(
+        DateTime processedAt)
+    {
+        ProcessedAt = processedAt;
+        Error = null;
+        NextAttemptAt = null;
+    }
+
+    public void MarkAsFailed(
+        string error,
+        DateTime nextAttemptAt)
+    {
+        RetryCount++;
+        Error = error;
+        NextAttemptAt = nextAttemptAt;
     }
 }

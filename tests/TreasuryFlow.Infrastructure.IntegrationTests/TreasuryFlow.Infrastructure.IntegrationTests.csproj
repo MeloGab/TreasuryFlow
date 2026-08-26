@@ -24,6 +24,7 @@
     <ProjectReference Include="..\..\src\TreasuryFlow.Application\TreasuryFlow.Application.csproj" />
     <ProjectReference Include="..\..\src\TreasuryFlow.Domain\TreasuryFlow.Domain.csproj" />
     <ProjectReference Include="..\..\src\TreasuryFlow.Infrastructure\TreasuryFlow.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\src\TreasuryFlow.Contracts\TreasuryFlow.Contracts.csproj" />
   </ItemGroup>
 
 </Project>
