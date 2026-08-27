@@ -36,6 +36,29 @@ public static class DependencyInjection
         return services;
     }
 
+    public static IServiceCollection AddWorkerInfrastructure(
+        this IServiceCollection services,
+        string connectionString,
+        IConfiguration configuration)
+    {
+        services.AddInfrastructure(
+            connectionString);
+
+        services.AddRabbitMqOptions(
+            configuration);
+
+        services.AddSingleton(
+            TimeProvider.System);
+
+        services.AddScoped<
+            PaymentOrderSubmittedIntegrationEventHandler>();
+
+        services.AddHostedService<
+            RabbitMqConsumerBackgroundService>();
+
+        return services;
+    }
+
     public static IServiceCollection AddInfrastructure(
         this IServiceCollection services,
         Action<DbContextOptionsBuilder> configureDbContext)
@@ -54,6 +77,26 @@ public static class DependencyInjection
         this IServiceCollection services,
         IConfiguration configuration)
     {
+        services.AddRabbitMqOptions(
+            configuration);
+
+        services.AddSingleton(
+            TimeProvider.System);
+
+        services.AddSingleton<
+            IIntegrationEventPublisher,
+            RabbitMqIntegrationEventPublisher>();
+
+        services.AddScoped<OutboxMessageProcessor>();
+
+        services.AddHostedService<
+            OutboxPublisherBackgroundService>();
+    }
+
+    private static void AddRabbitMqOptions(
+        this IServiceCollection services,
+        IConfiguration configuration)
+    {
         services.AddOptions<RabbitMqOptions>()
             .Bind(
                 configuration.GetSection(
@@ -69,22 +112,17 @@ public static class DependencyInjection
                         !string.IsNullOrWhiteSpace(options.QueueName) &&
                         !string.IsNullOrWhiteSpace(
                             options.SubmittedRoutingKey) &&
+                        !string.IsNullOrWhiteSpace(
+                            options.FailedExchangeName) &&
+                        !string.IsNullOrWhiteSpace(
+                            options.FailedQueueName) &&
+                        !string.IsNullOrWhiteSpace(
+                            options.FailedRoutingKey) &&
                         options.BatchSize > 0 &&
                         options.PollingIntervalSeconds > 0 &&
-                        options.RetryDelaySeconds > 0),
+                        options.RetryDelaySeconds > 0 &&
+                        options.ConsumerRetryDelaySeconds > 0),
                 "RabbitMQ configuration is invalid when enabled.")
             .ValidateOnStart();
-
-        services.AddSingleton(
-            TimeProvider.System);
-
-        services.AddSingleton<
-            IIntegrationEventPublisher,
-            RabbitMqIntegrationEventPublisher>();
-
-        services.AddScoped<OutboxMessageProcessor>();
-
-        services.AddHostedService<
-            OutboxPublisherBackgroundService>();
     }
 }

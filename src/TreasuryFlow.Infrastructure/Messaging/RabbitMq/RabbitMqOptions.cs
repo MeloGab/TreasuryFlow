@@ -23,9 +23,20 @@ public sealed class RabbitMqOptions
     public string SubmittedRoutingKey { get; init; } =
         "payment-order.submitted";
 
+    public string FailedExchangeName { get; init; } =
+        "treasuryflow.payment-orders.failed";
+
+    public string FailedQueueName { get; init; } =
+        "treasuryflow.payment-orders.processing.failed";
+
+    public string FailedRoutingKey { get; init; } =
+        "payment-order.submitted.failed";
+
     public int BatchSize { get; init; } = 20;
 
     public int PollingIntervalSeconds { get; init; } = 5;
 
     public int RetryDelaySeconds { get; init; } = 30;
+
+    public int ConsumerRetryDelaySeconds { get; init; } = 5;
 }

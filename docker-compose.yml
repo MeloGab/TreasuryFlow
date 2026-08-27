@@ -50,7 +50,7 @@ services:
         - -q
         - ping
       interval: 10s
-      timeout: 5s
+      timeout: 30s
       retries: 12
       start_period: 30s
     restart: unless-stopped
