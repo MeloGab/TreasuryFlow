@@ -108,7 +108,7 @@ public sealed class PaymentOrderSubmittedIntegrationEventHandlerTests
             Guid.NewGuid());
 
         var exception = await Assert.ThrowsAsync<
-            InvalidOperationException>(
+            NonRetryableIntegrationEventException>(
                 () => handler.HandleAsync(
                     integrationEvent));
 
@@ -139,10 +139,14 @@ public sealed class PaymentOrderSubmittedIntegrationEventHandlerTests
 
         var handler = CreateHandler(dbContext);
 
-        await Assert.ThrowsAsync<DomainException>(
-            () => handler.HandleAsync(
-                CreateIntegrationEvent(
-                    paymentOrder.Id)));
+        var exception = await Assert.ThrowsAsync<
+            NonRetryableIntegrationEventException>(
+                () => handler.HandleAsync(
+                    CreateIntegrationEvent(
+                        paymentOrder.Id)));
+
+        Assert.IsType<DomainException>(
+            exception.InnerException);
 
         Assert.Empty(
             await dbContext.InboxMessages.ToListAsync());

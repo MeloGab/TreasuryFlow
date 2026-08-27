@@ -146,11 +146,13 @@ public sealed class RabbitMqConsumerBackgroundService(
                 multiple: false,
                 cancellationToken: stoppingToken);
         }
-        catch (JsonException exception)
+        catch (Exception exception)
+            when (exception is JsonException or
+                NonRetryableIntegrationEventException)
         {
             logger.LogError(
                 exception,
-                "RabbitMQ message {MessageId} is invalid and will " +
+                "RabbitMQ message {MessageId} cannot be processed and will " +
                 "be moved to the failed queue.",
                 eventArgs.BasicProperties.MessageId);
 

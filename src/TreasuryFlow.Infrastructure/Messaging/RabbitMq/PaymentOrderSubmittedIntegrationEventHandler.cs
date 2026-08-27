@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using TreasuryFlow.Contracts.PaymentOrders;
+using TreasuryFlow.Domain.Common.Exceptions;
 using TreasuryFlow.Infrastructure.Persistence;
 using TreasuryFlow.Infrastructure.Persistence.Inbox;
 
@@ -40,11 +41,21 @@ public sealed class PaymentOrderSubmittedIntegrationEventHandler(
                 order =>
                     order.Id == integrationEvent.PaymentOrderId,
                 cancellationToken)
-            ?? throw new InvalidOperationException(
+            ?? throw new NonRetryableIntegrationEventException(
                 $"Payment order '{integrationEvent.PaymentOrderId}' " +
                 "was not found.");
 
-        paymentOrder.StartProcessing();
+        try
+        {
+            paymentOrder.StartProcessing();
+        }
+        catch (DomainException exception)
+        {
+            throw new NonRetryableIntegrationEventException(
+                $"Payment order '{integrationEvent.PaymentOrderId}' " +
+                "cannot process the submitted integration event.",
+                exception);
+        }
 
         dbContext.InboxMessages.Add(
             new InboxMessage(
