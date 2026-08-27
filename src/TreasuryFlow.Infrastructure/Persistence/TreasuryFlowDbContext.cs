@@ -2,6 +2,7 @@ using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using TreasuryFlow.Domain.Common.Events;
 using TreasuryFlow.Domain.PaymentOrders;
+using TreasuryFlow.Infrastructure.Persistence.Inbox;
 using TreasuryFlow.Infrastructure.Persistence.Outbox;
 
 namespace TreasuryFlow.Infrastructure.Persistence;
@@ -15,6 +16,9 @@ public sealed class TreasuryFlowDbContext(
 
     public DbSet<OutboxMessage> OutboxMessages =>
         Set<OutboxMessage>();
+
+    public DbSet<InboxMessage> InboxMessages =>
+        Set<InboxMessage>();
 
     protected override void OnModelCreating(
         ModelBuilder modelBuilder)
