@@ -23,6 +23,15 @@ public sealed class RabbitMqOptions
     public string SubmittedRoutingKey { get; init; } =
         "payment-order.submitted";
 
+    public string RetryExchangeName { get; init; } =
+        "treasuryflow.payment-orders.retry";
+
+    public string RetryQueueName { get; init; } =
+        "treasuryflow.payment-orders.processing.retry";
+
+    public string RetryRoutingKey { get; init; } =
+        "payment-order.submitted.retry";
+
     public string FailedExchangeName { get; init; } =
         "treasuryflow.payment-orders.failed";
 
@@ -39,4 +48,6 @@ public sealed class RabbitMqOptions
     public int RetryDelaySeconds { get; init; } = 30;
 
     public int ConsumerRetryDelaySeconds { get; init; } = 5;
+
+    public int ConsumerMaximumRetryAttempts { get; init; } = 3;
 }
