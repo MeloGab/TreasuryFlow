@@ -71,6 +71,96 @@ public class PaymentOrderTests
     }
 
     [Fact]
+    public void UpdateDetails_WhenDraft_ShouldUpdateEditableFields()
+    {
+        var paymentOrder = CreateValidPaymentOrder();
+        var previousId = paymentOrder.Id;
+        var previousCreatedAt = paymentOrder.CreatedAt;
+
+        paymentOrder.UpdateDetails(
+            "Updated supplier payment",
+            2500.75m,
+            " eur ",
+            "Updated Supplier Ltd.");
+
+        Assert.Equal(previousId, paymentOrder.Id);
+        Assert.Equal(
+            "Updated supplier payment",
+            paymentOrder.Description);
+        Assert.Equal(2500.75m, paymentOrder.Amount.Value);
+        Assert.Equal("EUR", paymentOrder.Amount.Currency);
+        Assert.Equal(
+            "Updated Supplier Ltd.",
+            paymentOrder.Beneficiary);
+        Assert.Equal(
+            PaymentOrderStatus.Draft,
+            paymentOrder.Status);
+        Assert.Equal(previousCreatedAt, paymentOrder.CreatedAt);
+        Assert.Null(paymentOrder.ProcessedAt);
+        Assert.Empty(paymentOrder.DomainEvents);
+    }
+
+    [Theory]
+    [InlineData(PaymentOrderStatus.Pending)]
+    [InlineData(PaymentOrderStatus.Processing)]
+    [InlineData(PaymentOrderStatus.Completed)]
+    [InlineData(PaymentOrderStatus.Failed)]
+    [InlineData(PaymentOrderStatus.Cancelled)]
+    public void UpdateDetails_WhenNotDraft_ShouldPreserveState(
+        PaymentOrderStatus status)
+    {
+        var paymentOrder = CreatePaymentOrderInStatus(status);
+        var previousDescription = paymentOrder.Description;
+        var previousAmount = paymentOrder.Amount;
+        var previousBeneficiary = paymentOrder.Beneficiary;
+        var previousProcessedAt = paymentOrder.ProcessedAt;
+        var previousEventCount = paymentOrder.DomainEvents.Count;
+
+        var action = () => paymentOrder.UpdateDetails(
+            "Updated supplier payment",
+            2500.75m,
+            "EUR",
+            "Updated Supplier Ltd.");
+
+        var exception = Assert.Throws<DomainException>(action);
+
+        Assert.Equal(
+            "Only draft payment orders can be updated.",
+            exception.Message);
+        Assert.Equal(previousDescription, paymentOrder.Description);
+        Assert.Equal(previousAmount, paymentOrder.Amount);
+        Assert.Equal(previousBeneficiary, paymentOrder.Beneficiary);
+        Assert.Equal(status, paymentOrder.Status);
+        Assert.Equal(previousProcessedAt, paymentOrder.ProcessedAt);
+        Assert.Equal(
+            previousEventCount,
+            paymentOrder.DomainEvents.Count);
+    }
+
+    [Fact]
+    public void UpdateDetails_WithInvalidData_ShouldPreserveCurrentDetails()
+    {
+        var paymentOrder = CreateValidPaymentOrder();
+        var previousDescription = paymentOrder.Description;
+        var previousAmount = paymentOrder.Amount;
+        var previousBeneficiary = paymentOrder.Beneficiary;
+
+        var action = () => paymentOrder.UpdateDetails(
+            "Updated supplier payment",
+            10.999m,
+            "EUR",
+            "Updated Supplier Ltd.");
+
+        Assert.Throws<DomainException>(action);
+        Assert.Equal(previousDescription, paymentOrder.Description);
+        Assert.Equal(previousAmount, paymentOrder.Amount);
+        Assert.Equal(previousBeneficiary, paymentOrder.Beneficiary);
+        Assert.Equal(
+            PaymentOrderStatus.Draft,
+            paymentOrder.Status);
+    }
+
+    [Fact]
     public void Submit_WhenDraft_ShouldChangeStatusToPending()
     {
         var paymentOrder = CreateValidPaymentOrder();

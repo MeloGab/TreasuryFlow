@@ -52,26 +52,39 @@ public class PaymentOrder
         string currency,
         string beneficiary)
     {
-        if (string.IsNullOrWhiteSpace(description))
-        {
-            throw new DomainException(
-                "Payment order description is required.");
-        }
-
-        if (string.IsNullOrWhiteSpace(beneficiary))
-        {
-            throw new DomainException(
-                "Payment order beneficiary is required.");
-        }
-
-        var money = Money.Create(
+        var money = ValidateDetails(
+            description,
             amount,
-            currency);
+            currency,
+            beneficiary);
 
         return new PaymentOrder(
             description,
             money,
             beneficiary);
+    }
+
+    public void UpdateDetails(
+        string description,
+        decimal amount,
+        string currency,
+        string beneficiary)
+    {
+        if (Status != PaymentOrderStatus.Draft)
+        {
+            throw new DomainException(
+                "Only draft payment orders can be updated.");
+        }
+
+        var updatedAmount = ValidateDetails(
+            description,
+            amount,
+            currency,
+            beneficiary);
+
+        Description = description;
+        Amount = updatedAmount;
+        Beneficiary = beneficiary;
     }
 
     public void Submit()
@@ -142,6 +155,29 @@ public class PaymentOrder
     public void ClearDomainEvents()
     {
         _domainEvents.Clear();
+    }
+
+    private static Money ValidateDetails(
+        string description,
+        decimal amount,
+        string currency,
+        string beneficiary)
+    {
+        if (string.IsNullOrWhiteSpace(description))
+        {
+            throw new DomainException(
+                "Payment order description is required.");
+        }
+
+        if (string.IsNullOrWhiteSpace(beneficiary))
+        {
+            throw new DomainException(
+                "Payment order beneficiary is required.");
+        }
+
+        return Money.Create(
+            amount,
+            currency);
     }
 
     private void AddDomainEvent(
