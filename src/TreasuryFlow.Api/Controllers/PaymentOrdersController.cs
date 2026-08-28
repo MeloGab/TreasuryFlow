@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using TreasuryFlow.Api.Contracts.PaymentOrders;
 using TreasuryFlow.Application.PaymentOrders.Commands.CreatePaymentOrder;
 using TreasuryFlow.Application.PaymentOrders.Commands.Lifecycle;
+using TreasuryFlow.Application.PaymentOrders.Commands.UpdatePaymentOrder;
 using TreasuryFlow.Application.PaymentOrders.Queries.GetPaymentOrderById;
 
 namespace TreasuryFlow.Api.Controllers;
@@ -82,6 +83,35 @@ public sealed class PaymentOrdersController(
             nameof(GetById),
             new { id = paymentOrderId },
             response);
+    }
+
+    [HttpPut("{id:guid}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType<HttpValidationProblemDetails>(
+        StatusCodes.Status400BadRequest)]
+    [ProducesResponseType<ProblemDetails>(
+        StatusCodes.Status404NotFound)]
+    [ProducesResponseType<ProblemDetails>(
+        StatusCodes.Status409Conflict)]
+    [ProducesResponseType<ProblemDetails>(
+        StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> Update(
+        Guid id,
+        UpdatePaymentOrderRequest request,
+        CancellationToken cancellationToken)
+    {
+        var command = new UpdatePaymentOrderCommand(
+            id,
+            request.Description,
+            request.Amount,
+            request.Currency,
+            request.Beneficiary);
+
+        await sender.Send(
+            command,
+            cancellationToken);
+
+        return NoContent();
     }
 
     [HttpPost("{id:guid}/submit")]

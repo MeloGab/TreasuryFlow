@@ -1,0 +1,57 @@
+using FluentValidation;
+using TreasuryFlow.Domain.PaymentOrders.ValueObjects;
+
+namespace TreasuryFlow.Application.PaymentOrders.Commands.UpdatePaymentOrder;
+
+public sealed class UpdatePaymentOrderCommandValidator
+    : AbstractValidator<UpdatePaymentOrderCommand>
+{
+    public UpdatePaymentOrderCommandValidator()
+    {
+        RuleFor(command => command.Id)
+            .NotEmpty()
+            .WithMessage("Payment order id is required.");
+
+        RuleFor(command => command.Description)
+            .NotEmpty()
+            .WithMessage("Description is required.");
+
+        RuleFor(command => command.Amount)
+            .Cascade(CascadeMode.Stop)
+            .GreaterThan(0)
+            .WithMessage("Amount must be greater than zero.")
+            .Must(HaveAtMostTwoDecimalPlaces)
+            .WithMessage(
+                "Amount cannot have more than two decimal places.");
+
+        RuleFor(command => command.Currency)
+            .Cascade(CascadeMode.Stop)
+            .NotEmpty()
+            .WithMessage("Currency is required.")
+            .Must(BeValidThreeLetterCurrencyCode)
+            .WithMessage(
+                "Currency must be a valid three-letter code.")
+            .Must(Money.IsSupportedCurrency)
+            .WithMessage(
+                "Currency is not supported.");
+
+        RuleFor(command => command.Beneficiary)
+            .NotEmpty()
+            .WithMessage("Beneficiary is required.");
+    }
+
+    private static bool HaveAtMostTwoDecimalPlaces(
+        decimal amount)
+    {
+        return decimal.Round(amount, 2) == amount;
+    }
+
+    private static bool BeValidThreeLetterCurrencyCode(
+        string currency)
+    {
+        var normalizedCurrency = currency.Trim();
+
+        return normalizedCurrency.Length == 3 &&
+            normalizedCurrency.All(char.IsLetter);
+    }
+}
