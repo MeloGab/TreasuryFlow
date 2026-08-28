@@ -12,6 +12,7 @@ namespace TreasuryFlow.Infrastructure.Messaging.RabbitMq;
 public sealed class RabbitMqConsumerBackgroundService(
     IServiceScopeFactory serviceScopeFactory,
     IOptions<RabbitMqOptions> options,
+    RabbitMqMessageRetryPolicy retryPolicy,
     ILogger<RabbitMqConsumerBackgroundService> logger)
     : BackgroundService
 {
@@ -156,9 +157,10 @@ public sealed class RabbitMqConsumerBackgroundService(
                 "be moved to the failed queue.",
                 eventArgs.BasicProperties.MessageId);
 
-            await MoveToFailedQueueAsync(
+            await MoveToFailedQueueSafelyAsync(
                 channel,
                 eventArgs,
+                exception,
                 stoppingToken);
         }
         catch (OperationCanceledException)
@@ -169,22 +171,11 @@ public sealed class RabbitMqConsumerBackgroundService(
         }
         catch (Exception exception)
         {
-            logger.LogWarning(
+            await HandleRetryableFailureAsync(
+                channel,
+                eventArgs,
                 exception,
-                "Failed to process RabbitMQ message {MessageId}. " +
-                "The message will be retried.",
-                eventArgs.BasicProperties.MessageId);
-
-            await Task.Delay(
-                TimeSpan.FromSeconds(
-                    _options.ConsumerRetryDelaySeconds),
                 stoppingToken);
-
-            await channel.BasicNackAsync(
-                eventArgs.DeliveryTag,
-                multiple: false,
-                requeue: true,
-                cancellationToken: stoppingToken);
         }
     }
 
@@ -220,9 +211,152 @@ public sealed class RabbitMqConsumerBackgroundService(
         return integrationEvent;
     }
 
+    private async Task MoveToFailedQueueSafelyAsync(
+        IChannel channel,
+        BasicDeliverEventArgs eventArgs,
+        Exception processingException,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            await MoveToFailedQueueAsync(
+                channel,
+                eventArgs,
+                cancellationToken);
+        }
+        catch (OperationCanceledException)
+            when (cancellationToken.IsCancellationRequested)
+        {
+            // The original unacknowledged message is returned to the
+            // main queue when the channel closes during shutdown.
+        }
+        catch (Exception forwardingException)
+        {
+            logger.LogError(
+                forwardingException,
+                "RabbitMQ message {MessageId} could not be moved to " +
+                "the failed queue. The original delivery will be requeued. " +
+                "Processing error: {ProcessingError}",
+                eventArgs.BasicProperties.MessageId,
+                processingException.Message);
+
+            await channel.BasicNackAsync(
+                eventArgs.DeliveryTag,
+                multiple: false,
+                requeue: true,
+                cancellationToken: cancellationToken);
+        }
+    }
+
+    private async Task HandleRetryableFailureAsync(
+        IChannel channel,
+        BasicDeliverEventArgs eventArgs,
+        Exception processingException,
+        CancellationToken cancellationToken)
+    {
+        var decision = retryPolicy.Decide(
+            eventArgs.BasicProperties.Headers);
+
+        try
+        {
+            if (decision.Action ==
+                RabbitMqRetryAction.MoveToFailed)
+            {
+                logger.LogError(
+                    processingException,
+                    "RabbitMQ message {MessageId} exhausted {RetryCount} " +
+                    "retry attempts and will be moved to the failed queue.",
+                    eventArgs.BasicProperties.MessageId,
+                    decision.RetryCount);
+
+                await MoveToFailedQueueAsync(
+                    channel,
+                    eventArgs,
+                    cancellationToken);
+
+                return;
+            }
+
+            logger.LogWarning(
+                processingException,
+                "Failed to process RabbitMQ message {MessageId}. " +
+                "Retry {RetryCount} of {MaximumRetryAttempts} is " +
+                "scheduled in {RetryDelaySeconds} seconds.",
+                eventArgs.BasicProperties.MessageId,
+                decision.RetryCount,
+                _options.ConsumerMaximumRetryAttempts,
+                _options.ConsumerRetryDelaySeconds);
+
+            await MoveToRetryQueueAsync(
+                channel,
+                eventArgs,
+                decision.RetryCount,
+                cancellationToken);
+        }
+        catch (OperationCanceledException)
+            when (cancellationToken.IsCancellationRequested)
+        {
+            // The original unacknowledged message is returned to the
+            // main queue when the channel closes during shutdown.
+        }
+        catch (Exception forwardingException)
+        {
+            logger.LogError(
+                forwardingException,
+                "RabbitMQ message {MessageId} could not be forwarded. " +
+                "The original delivery will be requeued.",
+                eventArgs.BasicProperties.MessageId);
+
+            await channel.BasicNackAsync(
+                eventArgs.DeliveryTag,
+                multiple: false,
+                requeue: true,
+                cancellationToken: cancellationToken);
+        }
+    }
+
+    private async Task MoveToRetryQueueAsync(
+        IChannel channel,
+        BasicDeliverEventArgs eventArgs,
+        int retryCount,
+        CancellationToken cancellationToken)
+    {
+        var headers = retryPolicy.CreateRetryHeaders(
+            eventArgs.BasicProperties.Headers,
+            retryCount);
+
+        await ForwardAndAcknowledgeAsync(
+            channel,
+            eventArgs,
+            _options.RetryExchangeName,
+            _options.RetryRoutingKey,
+            headers,
+            cancellationToken);
+    }
+
     private async Task MoveToFailedQueueAsync(
         IChannel channel,
         BasicDeliverEventArgs eventArgs,
+        CancellationToken cancellationToken)
+    {
+        var headers = retryPolicy.CopyHeaders(
+            eventArgs.BasicProperties.Headers);
+
+        await ForwardAndAcknowledgeAsync(
+            channel,
+            eventArgs,
+            _options.FailedExchangeName,
+            _options.FailedRoutingKey,
+            headers,
+            cancellationToken);
+    }
+
+    private static async Task ForwardAndAcknowledgeAsync(
+        IChannel channel,
+        BasicDeliverEventArgs eventArgs,
+        string exchangeName,
+        string routingKey,
+        IDictionary<string, object?> headers,
         CancellationToken cancellationToken)
     {
         var properties = new BasicProperties
@@ -231,12 +365,14 @@ public sealed class RabbitMqConsumerBackgroundService(
                 "application/json",
             DeliveryMode = DeliveryModes.Persistent,
             MessageId = eventArgs.BasicProperties.MessageId,
-            Type = eventArgs.BasicProperties.Type
+            Type = eventArgs.BasicProperties.Type,
+            CorrelationId = eventArgs.BasicProperties.CorrelationId,
+            Headers = headers
         };
 
         await channel.BasicPublishAsync(
-            exchange: _options.FailedExchangeName,
-            routingKey: _options.FailedRoutingKey,
+            exchange: exchangeName,
+            routingKey: routingKey,
             mandatory: true,
             basicProperties: properties,
             body: eventArgs.Body,
@@ -272,6 +408,40 @@ public sealed class RabbitMqConsumerBackgroundService(
             queue: _options.QueueName,
             exchange: _options.ExchangeName,
             routingKey: _options.SubmittedRoutingKey,
+            arguments: null,
+            cancellationToken: cancellationToken);
+
+        await channel.ExchangeDeclareAsync(
+            exchange: _options.RetryExchangeName,
+            type: ExchangeType.Topic,
+            durable: true,
+            autoDelete: false,
+            arguments: null,
+            cancellationToken: cancellationToken);
+
+        var retryQueueArguments =
+            new Dictionary<string, object?>
+            {
+                ["x-message-ttl"] = checked(
+                    _options.ConsumerRetryDelaySeconds * 1000),
+                ["x-dead-letter-exchange"] =
+                    _options.ExchangeName,
+                ["x-dead-letter-routing-key"] =
+                    _options.SubmittedRoutingKey
+            };
+
+        await channel.QueueDeclareAsync(
+            queue: _options.RetryQueueName,
+            durable: true,
+            exclusive: false,
+            autoDelete: false,
+            arguments: retryQueueArguments,
+            cancellationToken: cancellationToken);
+
+        await channel.QueueBindAsync(
+            queue: _options.RetryQueueName,
+            exchange: _options.RetryExchangeName,
+            routingKey: _options.RetryRoutingKey,
             arguments: null,
             cancellationToken: cancellationToken);
 

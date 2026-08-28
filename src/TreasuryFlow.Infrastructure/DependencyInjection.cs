@@ -50,6 +50,9 @@ public static class DependencyInjection
         services.AddSingleton(
             TimeProvider.System);
 
+        services.AddSingleton<
+            RabbitMqMessageRetryPolicy>();
+
         services.AddScoped<
             PaymentOrderSubmittedIntegrationEventHandler>();
 
@@ -113,6 +116,12 @@ public static class DependencyInjection
                         !string.IsNullOrWhiteSpace(
                             options.SubmittedRoutingKey) &&
                         !string.IsNullOrWhiteSpace(
+                            options.RetryExchangeName) &&
+                        !string.IsNullOrWhiteSpace(
+                            options.RetryQueueName) &&
+                        !string.IsNullOrWhiteSpace(
+                            options.RetryRoutingKey) &&
+                        !string.IsNullOrWhiteSpace(
                             options.FailedExchangeName) &&
                         !string.IsNullOrWhiteSpace(
                             options.FailedQueueName) &&
@@ -121,7 +130,8 @@ public static class DependencyInjection
                         options.BatchSize > 0 &&
                         options.PollingIntervalSeconds > 0 &&
                         options.RetryDelaySeconds > 0 &&
-                        options.ConsumerRetryDelaySeconds > 0),
+                        options.ConsumerRetryDelaySeconds > 0 &&
+                        options.ConsumerMaximumRetryAttempts > 0),
                 "RabbitMQ configuration is invalid when enabled.")
             .ValidateOnStart();
     }
