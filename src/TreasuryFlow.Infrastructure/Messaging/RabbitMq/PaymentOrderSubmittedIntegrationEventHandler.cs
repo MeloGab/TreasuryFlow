@@ -1,7 +1,9 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using TreasuryFlow.Application.PaymentOrders.Processing;
 using TreasuryFlow.Contracts.PaymentOrders;
 using TreasuryFlow.Domain.Common.Exceptions;
+using TreasuryFlow.Domain.PaymentOrders;
 using TreasuryFlow.Infrastructure.Persistence;
 using TreasuryFlow.Infrastructure.Persistence.Inbox;
 
@@ -15,6 +17,7 @@ public enum IntegrationEventHandlingResult
 
 public sealed class PaymentOrderSubmittedIntegrationEventHandler(
     TreasuryFlowDbContext dbContext,
+    IPaymentProcessor paymentProcessor,
     TimeProvider timeProvider,
     ILogger<PaymentOrderSubmittedIntegrationEventHandler> logger)
 {
@@ -45,16 +48,42 @@ public sealed class PaymentOrderSubmittedIntegrationEventHandler(
                 $"Payment order '{integrationEvent.PaymentOrderId}' " +
                 "was not found.");
 
-        try
+        if (paymentOrder.Status !=
+            PaymentOrderStatus.Processing)
         {
-            paymentOrder.StartProcessing();
+            try
+            {
+                paymentOrder.StartProcessing();
+            }
+            catch (DomainException exception)
+            {
+                throw new NonRetryableIntegrationEventException(
+                    $"Payment order '{integrationEvent.PaymentOrderId}' " +
+                    "cannot process the submitted integration event.",
+                    exception);
+            }
+
+            await dbContext.SaveChangesAsync(
+                cancellationToken);
         }
-        catch (DomainException exception)
+
+        var processingResult = await paymentProcessor.ProcessAsync(
+            new PaymentProcessingRequest(
+                integrationEvent.MessageId,
+                paymentOrder.Id,
+                paymentOrder.Amount.Value,
+                paymentOrder.Amount.Currency,
+                paymentOrder.Beneficiary),
+            cancellationToken);
+
+        if (processingResult.Outcome ==
+            PaymentProcessingOutcome.Approved)
         {
-            throw new NonRetryableIntegrationEventException(
-                $"Payment order '{integrationEvent.PaymentOrderId}' " +
-                "cannot process the submitted integration event.",
-                exception);
+            paymentOrder.Complete();
+        }
+        else
+        {
+            paymentOrder.Fail();
         }
 
         dbContext.InboxMessages.Add(
@@ -68,10 +97,11 @@ public sealed class PaymentOrderSubmittedIntegrationEventHandler(
             cancellationToken);
 
         logger.LogInformation(
-            "Integration event {MessageId} moved payment order " +
-            "{PaymentOrderId} to processing.",
+            "Integration event {MessageId} finished payment order " +
+            "{PaymentOrderId} with status {PaymentOrderStatus}.",
             integrationEvent.MessageId,
-            integrationEvent.PaymentOrderId);
+            integrationEvent.PaymentOrderId,
+            paymentOrder.Status);
 
         return IntegrationEventHandlingResult.Processed;
     }

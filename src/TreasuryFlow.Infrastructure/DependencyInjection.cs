@@ -1,9 +1,11 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using TreasuryFlow.Application.PaymentOrders.Processing;
 using TreasuryFlow.Domain.PaymentOrders.Repositories;
 using TreasuryFlow.Infrastructure.Messaging;
 using TreasuryFlow.Infrastructure.Messaging.RabbitMq;
+using TreasuryFlow.Infrastructure.PaymentProcessing;
 using TreasuryFlow.Infrastructure.Persistence;
 using TreasuryFlow.Infrastructure.Persistence.Outbox;
 using TreasuryFlow.Infrastructure.Persistence.Repositories;
@@ -52,6 +54,23 @@ public static class DependencyInjection
 
         services.AddSingleton<
             RabbitMqMessageRetryPolicy>();
+
+        services.AddOptions<PaymentProcessorOptions>()
+            .Bind(
+                configuration.GetSection(
+                    PaymentProcessorOptions.SectionName))
+            .Validate(
+                options =>
+                    Enum.TryParse<PaymentProcessingOutcome>(
+                        options.SimulatedOutcome,
+                        ignoreCase: true,
+                        out _),
+                "Payment processor configuration is invalid.")
+            .ValidateOnStart();
+
+        services.AddSingleton<
+            IPaymentProcessor,
+            SimulatedPaymentProcessor>();
 
         services.AddScoped<
             PaymentOrderSubmittedIntegrationEventHandler>();

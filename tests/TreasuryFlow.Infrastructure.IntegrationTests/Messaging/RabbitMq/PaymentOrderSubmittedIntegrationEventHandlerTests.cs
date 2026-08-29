@@ -1,6 +1,7 @@
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
+using TreasuryFlow.Application.PaymentOrders.Processing;
 using TreasuryFlow.Contracts.PaymentOrders;
 using TreasuryFlow.Domain.Common.Exceptions;
 using TreasuryFlow.Domain.PaymentOrders;
@@ -46,7 +47,7 @@ public sealed class PaymentOrderSubmittedIntegrationEventHandlerTests
             IntegrationEventHandlingResult.Processed,
             result);
         Assert.Equal(
-            PaymentOrderStatus.Processing,
+            PaymentOrderStatus.Completed,
             persistedPaymentOrder.Status);
         Assert.Equal(
             integrationEvent.MessageId,
@@ -90,7 +91,7 @@ public sealed class PaymentOrderSubmittedIntegrationEventHandlerTests
             1,
             await dbContext.InboxMessages.CountAsync());
         Assert.Equal(
-            PaymentOrderStatus.Processing,
+            PaymentOrderStatus.Completed,
             (await dbContext.PaymentOrders.SingleAsync()).Status);
     }
 
@@ -161,6 +162,7 @@ public sealed class PaymentOrderSubmittedIntegrationEventHandlerTests
     {
         return new PaymentOrderSubmittedIntegrationEventHandler(
             dbContext,
+            new StubPaymentProcessor(),
             new FixedTimeProvider(ProcessedAt),
             NullLogger<
                 PaymentOrderSubmittedIntegrationEventHandler>.Instance);
@@ -225,5 +227,17 @@ public sealed class PaymentOrderSubmittedIntegrationEventHandlerTests
     {
         public override DateTimeOffset GetUtcNow() =>
             utcNow;
+    }
+
+    private sealed class StubPaymentProcessor : IPaymentProcessor
+    {
+        public Task<PaymentProcessingResult> ProcessAsync(
+            PaymentProcessingRequest request,
+            CancellationToken cancellationToken = default)
+        {
+            return Task.FromResult(
+                new PaymentProcessingResult(
+                    PaymentProcessingOutcome.Approved));
+        }
     }
 }
