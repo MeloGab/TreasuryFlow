@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using TreasuryFlow.Application.PaymentOrders.Processing;
+using TreasuryFlow.Application.PaymentOrders.Receipts;
 using TreasuryFlow.Contracts.PaymentOrders;
 using TreasuryFlow.Domain.Common.Exceptions;
 using TreasuryFlow.Domain.PaymentOrders;
@@ -18,6 +19,7 @@ public enum IntegrationEventHandlingResult
 public sealed class PaymentOrderSubmittedIntegrationEventHandler(
     TreasuryFlowDbContext dbContext,
     IPaymentProcessor paymentProcessor,
+    IPaymentReceiptStorage paymentReceiptStorage,
     TimeProvider timeProvider,
     ILogger<PaymentOrderSubmittedIntegrationEventHandler> logger)
 {
@@ -80,6 +82,16 @@ public sealed class PaymentOrderSubmittedIntegrationEventHandler(
             PaymentProcessingOutcome.Approved)
         {
             paymentOrder.Complete();
+
+            await paymentReceiptStorage.StoreAsync(
+                new PaymentReceipt(
+                    paymentOrder.Id,
+                    paymentOrder.Description,
+                    paymentOrder.Amount.Value,
+                    paymentOrder.Amount.Currency,
+                    paymentOrder.Beneficiary,
+                    paymentOrder.ProcessedAt!.Value),
+                cancellationToken);
         }
         else
         {
