@@ -2,6 +2,7 @@ using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
 using TreasuryFlow.Application.PaymentOrders.Processing;
+using TreasuryFlow.Application.PaymentOrders.Receipts;
 using TreasuryFlow.Contracts.PaymentOrders;
 using TreasuryFlow.Domain.Common.Exceptions;
 using TreasuryFlow.Domain.PaymentOrders;
@@ -163,6 +164,7 @@ public sealed class PaymentOrderSubmittedIntegrationEventHandlerTests
         return new PaymentOrderSubmittedIntegrationEventHandler(
             dbContext,
             new StubPaymentProcessor(),
+            new StubPaymentReceiptStorage(),
             new FixedTimeProvider(ProcessedAt),
             NullLogger<
                 PaymentOrderSubmittedIntegrationEventHandler>.Instance);
@@ -238,6 +240,17 @@ public sealed class PaymentOrderSubmittedIntegrationEventHandlerTests
             return Task.FromResult(
                 new PaymentProcessingResult(
                     PaymentProcessingOutcome.Approved));
+        }
+    }
+
+    private sealed class StubPaymentReceiptStorage
+        : IPaymentReceiptStorage
+    {
+        public Task StoreAsync(
+            PaymentReceipt receipt,
+            CancellationToken cancellationToken = default)
+        {
+            return Task.CompletedTask;
         }
     }
 }

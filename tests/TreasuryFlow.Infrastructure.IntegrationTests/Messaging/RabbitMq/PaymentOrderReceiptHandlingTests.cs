@@ -10,13 +10,13 @@ using TreasuryFlow.Infrastructure.Persistence;
 
 namespace TreasuryFlow.Infrastructure.IntegrationTests.Messaging.RabbitMq;
 
-public sealed class PaymentOrderProcessingExecutionTests
+public sealed class PaymentOrderReceiptHandlingTests
 {
     private static readonly DateTimeOffset InboxProcessedAt =
-        new(2026, 8, 28, 12, 0, 0, TimeSpan.Zero);
+        new(2026, 8, 29, 12, 0, 0, TimeSpan.Zero);
 
     [Fact]
-    public async Task HandleAsync_WhenProcessorRejects_ShouldFailAndPersistInbox()
+    public async Task HandleAsync_WhenApproved_ShouldStoreReceiptAndComplete()
     {
         await using var connection = await CreateOpenConnectionAsync();
         await using var dbContext = await CreateDbContextAsync(connection);
@@ -25,26 +25,35 @@ public sealed class PaymentOrderProcessingExecutionTests
         dbContext.PaymentOrders.Add(paymentOrder);
         await dbContext.SaveChangesAsync();
 
-        var integrationEvent = CreateIntegrationEvent(paymentOrder.Id);
-        var processor = new StubPaymentProcessor(
-            PaymentProcessingOutcome.Rejected);
-        var handler = CreateHandler(dbContext, processor);
+        var receiptStorage = new StubPaymentReceiptStorage();
+        var handler = CreateHandler(
+            dbContext,
+            PaymentProcessingOutcome.Approved,
+            receiptStorage);
 
-        var result = await handler.HandleAsync(integrationEvent);
+        await handler.HandleAsync(
+            CreateIntegrationEvent(paymentOrder.Id));
 
         dbContext.ChangeTracker.Clear();
 
         var persistedPaymentOrder =
             await dbContext.PaymentOrders.SingleAsync();
+        var receipt = Assert.Single(receiptStorage.Receipts);
 
-        Assert.Equal(IntegrationEventHandlingResult.Processed, result);
-        Assert.Equal(PaymentOrderStatus.Failed, persistedPaymentOrder.Status);
-        Assert.NotNull(persistedPaymentOrder.ProcessedAt);
+        Assert.Equal(
+            PaymentOrderStatus.Completed,
+            persistedPaymentOrder.Status);
+        Assert.Equal(paymentOrder.Id, receipt.PaymentOrderId);
+        Assert.Equal(paymentOrder.Description, receipt.Description);
+        Assert.Equal(paymentOrder.Amount.Value, receipt.Amount);
+        Assert.Equal(paymentOrder.Amount.Currency, receipt.Currency);
+        Assert.Equal(paymentOrder.Beneficiary, receipt.Beneficiary);
+        Assert.Equal(persistedPaymentOrder.ProcessedAt, receipt.ProcessedAt);
         Assert.Equal(1, await dbContext.InboxMessages.CountAsync());
     }
 
     [Fact]
-    public async Task HandleAsync_WhenProcessorIsUnavailable_ShouldLeaveProcessingWithoutInbox()
+    public async Task HandleAsync_WhenRejected_ShouldNotStoreReceipt()
     {
         await using var connection = await CreateOpenConnectionAsync();
         await using var dbContext = await CreateDbContextAsync(connection);
@@ -53,68 +62,68 @@ public sealed class PaymentOrderProcessingExecutionTests
         dbContext.PaymentOrders.Add(paymentOrder);
         await dbContext.SaveChangesAsync();
 
-        var integrationEvent = CreateIntegrationEvent(paymentOrder.Id);
-        var processor = new StubPaymentProcessor(
-            exception: new InvalidOperationException(
-                "Processor unavailable."));
-        var handler = CreateHandler(dbContext, processor);
+        var receiptStorage = new StubPaymentReceiptStorage();
+        var handler = CreateHandler(
+            dbContext,
+            PaymentProcessingOutcome.Rejected,
+            receiptStorage);
+
+        await handler.HandleAsync(
+            CreateIntegrationEvent(paymentOrder.Id));
+
+        dbContext.ChangeTracker.Clear();
+
+        Assert.Equal(
+            PaymentOrderStatus.Failed,
+            (await dbContext.PaymentOrders.SingleAsync()).Status);
+        Assert.Empty(receiptStorage.Receipts);
+        Assert.Equal(1, await dbContext.InboxMessages.CountAsync());
+    }
+
+    [Fact]
+    public async Task HandleAsync_WhenStorageIsUnavailable_ShouldRemainProcessingWithoutInbox()
+    {
+        await using var connection = await CreateOpenConnectionAsync();
+        await using var dbContext = await CreateDbContextAsync(connection);
+
+        var paymentOrder = CreatePendingPaymentOrder();
+        dbContext.PaymentOrders.Add(paymentOrder);
+        await dbContext.SaveChangesAsync();
+
+        var receiptStorage = new StubPaymentReceiptStorage(
+            new InvalidOperationException(
+                "Receipt storage unavailable."));
+        var handler = CreateHandler(
+            dbContext,
+            PaymentProcessingOutcome.Approved,
+            receiptStorage);
 
         await Assert.ThrowsAsync<InvalidOperationException>(
-            () => handler.HandleAsync(integrationEvent));
+            () => handler.HandleAsync(
+                CreateIntegrationEvent(paymentOrder.Id)));
 
         dbContext.ChangeTracker.Clear();
 
         var persistedPaymentOrder =
             await dbContext.PaymentOrders.SingleAsync();
-        var request = Assert.Single(processor.Requests);
 
-        Assert.Equal(PaymentOrderStatus.Processing, persistedPaymentOrder.Status);
+        Assert.Equal(
+            PaymentOrderStatus.Processing,
+            persistedPaymentOrder.Status);
         Assert.Null(persistedPaymentOrder.ProcessedAt);
+        Assert.Single(receiptStorage.Receipts);
         Assert.Empty(await dbContext.InboxMessages.ToListAsync());
-        Assert.Equal(integrationEvent.MessageId, request.IdempotencyKey);
-        Assert.Equal(paymentOrder.Id, request.PaymentOrderId);
-        Assert.Equal(paymentOrder.Amount.Value, request.Amount);
-        Assert.Equal(paymentOrder.Amount.Currency, request.Currency);
-        Assert.Equal(paymentOrder.Beneficiary, request.Beneficiary);
-    }
-
-    [Fact]
-    public async Task HandleAsync_WhenRedeliveredDuringProcessing_ShouldResumeAndComplete()
-    {
-        await using var connection = await CreateOpenConnectionAsync();
-        await using var dbContext = await CreateDbContextAsync(connection);
-
-        var paymentOrder = CreatePendingPaymentOrder();
-        paymentOrder.StartProcessing();
-        dbContext.PaymentOrders.Add(paymentOrder);
-        await dbContext.SaveChangesAsync();
-
-        var integrationEvent = CreateIntegrationEvent(paymentOrder.Id);
-        var processor = new StubPaymentProcessor();
-        var handler = CreateHandler(dbContext, processor);
-
-        var result = await handler.HandleAsync(integrationEvent);
-
-        dbContext.ChangeTracker.Clear();
-
-        var persistedPaymentOrder =
-            await dbContext.PaymentOrders.SingleAsync();
-
-        Assert.Equal(IntegrationEventHandlingResult.Processed, result);
-        Assert.Equal(PaymentOrderStatus.Completed, persistedPaymentOrder.Status);
-        Assert.NotNull(persistedPaymentOrder.ProcessedAt);
-        Assert.Single(processor.Requests);
-        Assert.Equal(1, await dbContext.InboxMessages.CountAsync());
     }
 
     private static PaymentOrderSubmittedIntegrationEventHandler CreateHandler(
         TreasuryFlowDbContext dbContext,
-        IPaymentProcessor processor)
+        PaymentProcessingOutcome outcome,
+        IPaymentReceiptStorage receiptStorage)
     {
         return new PaymentOrderSubmittedIntegrationEventHandler(
             dbContext,
-            processor,
-            new StubPaymentReceiptStorage(),
+            new StubPaymentProcessor(outcome),
+            receiptStorage,
             new FixedTimeProvider(InboxProcessedAt),
             NullLogger<PaymentOrderSubmittedIntegrationEventHandler>.Instance);
     }
@@ -122,7 +131,7 @@ public sealed class PaymentOrderProcessingExecutionTests
     private static PaymentOrder CreatePendingPaymentOrder()
     {
         var paymentOrder = PaymentOrder.Create(
-            "Payment order",
+            "Payment order receipt",
             125.50m,
             "BRL",
             "Beneficiary");
@@ -169,34 +178,35 @@ public sealed class PaymentOrderProcessingExecutionTests
     }
 
     private sealed class StubPaymentProcessor(
-        PaymentProcessingOutcome outcome = PaymentProcessingOutcome.Approved,
-        Exception? exception = null)
+        PaymentProcessingOutcome outcome)
         : IPaymentProcessor
     {
-        public List<PaymentProcessingRequest> Requests { get; } = [];
-
         public Task<PaymentProcessingResult> ProcessAsync(
             PaymentProcessingRequest request,
             CancellationToken cancellationToken = default)
         {
-            Requests.Add(request);
+            return Task.FromResult(
+                new PaymentProcessingResult(outcome));
+        }
+    }
+
+    private sealed class StubPaymentReceiptStorage(
+        Exception? exception = null)
+        : IPaymentReceiptStorage
+    {
+        public List<PaymentReceipt> Receipts { get; } = [];
+
+        public Task StoreAsync(
+            PaymentReceipt receipt,
+            CancellationToken cancellationToken = default)
+        {
+            Receipts.Add(receipt);
 
             if (exception is not null)
             {
                 throw exception;
             }
 
-            return Task.FromResult(new PaymentProcessingResult(outcome));
-        }
-    }
-
-    private sealed class StubPaymentReceiptStorage
-        : IPaymentReceiptStorage
-    {
-        public Task StoreAsync(
-            PaymentReceipt receipt,
-            CancellationToken cancellationToken = default)
-        {
             return Task.CompletedTask;
         }
     }

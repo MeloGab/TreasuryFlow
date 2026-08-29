@@ -1,7 +1,10 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
+using Minio;
 using TreasuryFlow.Application.PaymentOrders.Processing;
+using TreasuryFlow.Application.PaymentOrders.Receipts;
 using TreasuryFlow.Domain.PaymentOrders.Repositories;
 using TreasuryFlow.Infrastructure.Messaging;
 using TreasuryFlow.Infrastructure.Messaging.RabbitMq;
@@ -9,6 +12,7 @@ using TreasuryFlow.Infrastructure.PaymentProcessing;
 using TreasuryFlow.Infrastructure.Persistence;
 using TreasuryFlow.Infrastructure.Persistence.Outbox;
 using TreasuryFlow.Infrastructure.Persistence.Repositories;
+using TreasuryFlow.Infrastructure.Storage.Minio;
 
 namespace TreasuryFlow.Infrastructure;
 
@@ -67,6 +71,40 @@ public static class DependencyInjection
                         out _),
                 "Payment processor configuration is invalid.")
             .ValidateOnStart();
+
+        services.AddOptions<MinioOptions>()
+            .Bind(
+                configuration.GetSection(
+                    MinioOptions.SectionName))
+            .Validate(
+                options =>
+                    !string.IsNullOrWhiteSpace(options.Endpoint) &&
+                    !string.IsNullOrWhiteSpace(options.AccessKey) &&
+                    !string.IsNullOrWhiteSpace(options.SecretKey) &&
+                    !string.IsNullOrWhiteSpace(options.BucketName),
+                "MinIO configuration is invalid.")
+            .ValidateOnStart();
+
+        services.AddSingleton<IMinioClient>(
+            serviceProvider =>
+            {
+                var options = serviceProvider
+                    .GetRequiredService<IOptions<MinioOptions>>()
+                    .Value;
+
+                return new MinioClient()
+                    .WithEndpoint(
+                        options.Endpoint)
+                    .WithCredentials(
+                        options.AccessKey,
+                        options.SecretKey)
+                    .WithSSL(options.UseSsl)
+                    .Build();
+            });
+
+        services.AddSingleton<
+            IPaymentReceiptStorage,
+            MinioPaymentReceiptStorage>();
 
         services.AddSingleton<
             IPaymentProcessor,
