@@ -1,0 +1,89 @@
+<a class="back-link" routerLink="/">← Voltar ao início</a>
+
+@if (loading()) {
+  <div class="feedback-card">Carregando ordem...</div>
+} @else if (order(); as paymentOrder) {
+  <section class="page-header">
+    <div>
+      <span class="eyebrow">Ordem de pagamento</span>
+      <h1>{{ paymentOrder.description }}</h1>
+      <code>{{ paymentOrder.id }}</code>
+    </div>
+    <div class="status" [attr.data-status]="paymentOrder.status">
+      <strong>{{ statusLabel(paymentOrder.status) }}</strong>
+      <span>{{ statusDescription(paymentOrder.status) }}</span>
+    </div>
+  </section>
+
+  @if (error()) {
+    <div class="alert" role="alert">{{ error() }}</div>
+  }
+
+  <section class="details-grid" aria-label="Dados da ordem">
+    <article class="amount-card">
+      <span>Valor da ordem</span>
+      <strong>{{
+        paymentOrder.amount | currency: paymentOrder.currency : 'symbol' : '1.2-2'
+      }}</strong>
+      <small>{{ paymentOrder.currency }}</small>
+    </article>
+
+    <article class="detail-card">
+      <span>Beneficiário</span>
+      <strong>{{ paymentOrder.beneficiary }}</strong>
+    </article>
+
+    <article class="detail-card">
+      <span>Criada em</span>
+      <strong>{{ paymentOrder.createdAt | date: 'dd/MM/yyyy HH:mm' }}</strong>
+    </article>
+
+    <article class="detail-card">
+      <span>Processada em</span>
+      <strong>
+        {{
+          paymentOrder.processedAt
+            ? (paymentOrder.processedAt | date: 'dd/MM/yyyy HH:mm')
+            : 'Ainda não processada'
+        }}
+      </strong>
+    </article>
+  </section>
+
+  @if (paymentOrder.status === 'Pending' || paymentOrder.status === 'Processing') {
+    <div class="processing-note">
+      <span class="pulse" aria-hidden="true"></span>
+      Esta página está acompanhando automaticamente o processamento.
+    </div>
+  }
+
+  <section class="actions" aria-label="Ações disponíveis">
+    <button class="button ghost" type="button" (click)="refresh()" [disabled]="acting()">
+      Atualizar
+    </button>
+
+    @if (paymentOrder.status === 'Draft') {
+      <button class="button danger" type="button" (click)="deleteDraft()" [disabled]="acting()">
+        Excluir rascunho
+      </button>
+      <a class="button secondary" [routerLink]="['/payment-orders', paymentOrder.id, 'edit']">
+        Editar
+      </a>
+      <button class="button primary" type="button" (click)="submit()" [disabled]="acting()">
+        {{ acting() ? 'Enviando...' : 'Enviar para processamento' }}
+      </button>
+    }
+
+    @if (paymentOrder.status === 'Pending') {
+      <button class="button danger" type="button" (click)="cancelPending()" [disabled]="acting()">
+        Cancelar ordem
+      </button>
+    }
+  </section>
+} @else {
+  <div class="feedback-card error">
+    <strong>Não foi possível exibir a ordem.</strong>
+    <span>{{ error() ?? 'Verifique o identificador informado.' }}</span>
+    <a class="button secondary" routerLink="/">Voltar ao início</a>
+  </div>
+}

@@ -1,1 +1,122 @@
-/* You can add global styles to this file, and also import other style files */
+:root {
+  color-scheme: light;
+  --ink: #172033;
+  --muted: #627087;
+  --brand: #0f766e;
+  --brand-dark: #115e59;
+  --brand-soft: #e8f7f4;
+  --surface: #ffffff;
+  --surface-subtle: #f1f5f9;
+  --border: #dce3eb;
+  --border-strong: #aeb9c8;
+  --focus: rgba(15, 118, 110, 0.18);
+  --danger: #b42318;
+  --danger-soft: #fff1f0;
+  --danger-border: #f4a6a0;
+  --shadow: 0 20px 55px rgba(30, 41, 59, 0.08);
+  font-family:
+    Inter,
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    sans-serif;
+  font-synthesis: none;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  min-width: 20rem;
+  min-height: 100%;
+  background: #f8fafc;
+}
+
+body {
+  min-height: 100vh;
+  margin: 0;
+  color: var(--ink);
+  background:
+    radial-gradient(circle at 10% 0%, rgba(15, 118, 110, 0.08), transparent 24rem), #f8fafc;
+}
+
+button,
+input,
+select {
+  font: inherit;
+}
+
+button,
+a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+.button {
+  display: inline-flex;
+  min-height: 2.75rem;
+  align-items: center;
+  justify-content: center;
+  padding: 0.75rem 1rem;
+  border: 1px solid transparent;
+  border-radius: 0.7rem;
+  cursor: pointer;
+  text-decoration: none;
+  font-weight: 750;
+  transition:
+    transform 120ms ease,
+    box-shadow 120ms ease,
+    background 120ms ease;
+}
+
+.button:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.button.primary {
+  color: #fff;
+  background: var(--brand);
+  box-shadow: 0 8px 20px rgba(15, 118, 110, 0.18);
+}
+
+.button.primary:hover:not(:disabled) {
+  background: var(--brand-dark);
+}
+
+.button.secondary {
+  border-color: var(--brand);
+  color: var(--brand-dark);
+  background: var(--brand-soft);
+}
+
+.button.ghost {
+  border-color: var(--border);
+  color: var(--muted);
+  background: var(--surface);
+}
+
+.button.danger {
+  border-color: var(--danger-border);
+  color: var(--danger);
+  background: var(--danger-soft);
+}
+
+::selection {
+  color: white;
+  background: var(--brand);
+}

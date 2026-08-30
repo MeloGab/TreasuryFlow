@@ -1,0 +1,24 @@
+<div class="app-shell">
+  <header class="topbar">
+    <a class="brand" routerLink="/" aria-label="Ir para o início">
+      <span class="brand-mark" aria-hidden="true">TF</span>
+      <span>
+        <strong>TreasuryFlow</strong>
+        <small>Ordens de pagamento</small>
+      </span>
+    </a>
+
+    <nav aria-label="Navegação principal">
+      <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
+        Início
+      </a>
+      <a class="primary-link" routerLink="/payment-orders/new">Nova ordem</a>
+    </nav>
+  </header>
+
+  <main>
+    <router-outlet />
+  </main>
+
+  <footer>TreasuryFlow · Fluxo de pagamentos rastreável</footer>
+</div>
