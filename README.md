@@ -1,5 +1,7 @@
 # TreasuryFlow
 
+[![Continuous Integration](https://github.com/MeloGab/TreasuryFlow/actions/workflows/continuous-integration.yml/badge.svg)](https://github.com/MeloGab/TreasuryFlow/actions/workflows/continuous-integration.yml)
+
 Projeto de estudo de arquitetura de software e desenvolvimento enterprise com .NET utilizando o maximo possivel de tecnologias atuais com o objetivo de aprendizado e demonstracao de conhecimento
 
 ## Objetivo
