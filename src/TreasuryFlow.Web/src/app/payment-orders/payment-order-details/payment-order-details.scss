@@ -1,0 +1,215 @@
+.back-link {
+  display: inline-block;
+  margin-bottom: 2rem;
+  color: var(--muted);
+  text-decoration: none;
+  font-weight: 700;
+}
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 2rem;
+  align-items: flex-start;
+  margin-bottom: 2.5rem;
+}
+.eyebrow {
+  color: var(--brand-dark);
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+h1 {
+  margin: 0.5rem 0;
+  font-size: clamp(2rem, 5vw, 3.5rem);
+  letter-spacing: -0.04em;
+}
+code {
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.status {
+  display: grid;
+  gap: 0.25rem;
+  max-width: 18rem;
+  padding: 1rem 1.2rem;
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  color: var(--muted);
+  background: var(--surface);
+}
+
+.status strong {
+  color: var(--ink);
+}
+.status span {
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+.status[data-status='Draft'] {
+  border-color: #cbd5e1;
+}
+.status[data-status='Pending'] {
+  border-color: #fbbf24;
+  background: #fffbeb;
+}
+.status[data-status='Processing'] {
+  border-color: #60a5fa;
+  background: #eff6ff;
+}
+.status[data-status='Completed'] {
+  border-color: #34d399;
+  background: #ecfdf5;
+}
+.status[data-status='Failed'] {
+  border-color: var(--danger-border);
+  background: var(--danger-soft);
+}
+.status[data-status='Cancelled'] {
+  border-color: #cbd5e1;
+  background: #f8fafc;
+}
+
+.details-grid {
+  display: grid;
+  grid-template-columns: 1.2fr repeat(3, 1fr);
+  border: 1px solid var(--border);
+  border-radius: 1.25rem;
+  overflow: hidden;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.details-grid article {
+  min-width: 0;
+  padding: 1.5rem;
+  border-right: 1px solid var(--border);
+}
+.details-grid article:last-child {
+  border-right: 0;
+}
+.details-grid span {
+  display: block;
+  margin-bottom: 0.55rem;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+.details-grid strong {
+  display: block;
+  overflow-wrap: anywhere;
+}
+.amount-card strong {
+  color: var(--brand-dark);
+  font-size: clamp(1.4rem, 3vw, 2rem);
+}
+.amount-card small {
+  color: var(--muted);
+}
+
+.processing-note {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  margin-top: 1rem;
+  padding: 0.9rem 1rem;
+  border-radius: 0.7rem;
+  color: #1e40af;
+  background: #eff6ff;
+  font-size: 0.88rem;
+}
+
+.pulse {
+  width: 0.65rem;
+  height: 0.65rem;
+  border-radius: 50%;
+  background: #3b82f6;
+  animation: pulse 1.5s infinite;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 2rem;
+}
+.alert {
+  margin-bottom: 1rem;
+  padding: 1rem 1.2rem;
+  border: 1px solid var(--danger-border);
+  border-radius: 0.75rem;
+  color: var(--danger);
+  background: var(--danger-soft);
+}
+.feedback-card {
+  display: grid;
+  justify-items: start;
+  gap: 0.8rem;
+  padding: 2rem;
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  background: var(--surface);
+}
+.feedback-card.error {
+  border-color: var(--danger-border);
+}
+.feedback-card span {
+  color: var(--muted);
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.45;
+    transform: scale(0.75);
+  }
+}
+
+@media (max-width: 62rem) {
+  .details-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+  .details-grid article {
+    border-bottom: 1px solid var(--border);
+  }
+  .details-grid article:nth-child(2) {
+    border-right: 0;
+  }
+  .details-grid article:nth-last-child(-n + 2) {
+    border-bottom: 0;
+  }
+}
+
+@media (max-width: 42rem) {
+  .page-header {
+    flex-direction: column;
+  }
+  .status {
+    max-width: none;
+  }
+  .details-grid {
+    grid-template-columns: 1fr;
+  }
+  .details-grid article {
+    border-right: 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .details-grid article:nth-last-child(2) {
+    border-bottom: 1px solid var(--border);
+  }
+  .details-grid article:last-child {
+    border-bottom: 0;
+  }
+  .actions {
+    flex-direction: column-reverse;
+  }
+  .actions .button {
+    text-align: center;
+  }
+}

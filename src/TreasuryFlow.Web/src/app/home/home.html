@@ -1,0 +1,41 @@
+<section class="hero">
+  <div class="eyebrow">Operações financeiras com rastreabilidade</div>
+  <h1>Acompanhe uma ordem do rascunho ao processamento.</h1>
+  <p>
+    Crie, revise e envie ordens de pagamento. O processamento acontece em segundo plano, preservando
+    o histórico de cada decisão.
+  </p>
+  <a class="button primary" routerLink="/payment-orders/new">Criar nova ordem</a>
+</section>
+
+<section class="lookup" aria-labelledby="lookup-title">
+  <div>
+    <span class="section-number">01</span>
+    <h2 id="lookup-title">Localizar uma ordem</h2>
+    <p>Informe o identificador recebido na criação para consultar o estado atual.</p>
+  </div>
+
+  <form [formGroup]="form" (ngSubmit)="findPaymentOrder()">
+    <label for="payment-order-id">ID da ordem</label>
+    <div class="input-row">
+      <input
+        id="payment-order-id"
+        type="text"
+        autocomplete="off"
+        placeholder="00000000-0000-0000-0000-000000000000"
+        formControlName="paymentOrderId"
+      />
+      <button class="button secondary" type="submit">Consultar</button>
+    </div>
+    @if (paymentOrderId.touched && paymentOrderId.hasError('required')) {
+      <small class="field-error">Informe o ID da ordem.</small>
+    } @else if (paymentOrderId.touched && paymentOrderId.hasError('pattern')) {
+      <small class="field-error">Use um identificador UUID válido.</small>
+    }
+  </form>
+</section>
+
+<section class="flow" aria-label="Fluxo de uma ordem de pagamento">
+  <span>Draft</span><i>→</i><span>Pending</span><i>→</i><span>Processing</span><i>→</i
+  ><span>Completed</span>
+</section>

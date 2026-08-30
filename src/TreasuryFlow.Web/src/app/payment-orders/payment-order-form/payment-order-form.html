@@ -1,0 +1,71 @@
+<section class="page-header">
+  <a class="back-link" [routerLink]="isEdit ? ['/payment-orders', id] : '/'">← Voltar</a>
+  <span class="eyebrow">{{ isEdit ? 'Revisar rascunho' : 'Nova operação' }}</span>
+  <h1>{{ isEdit ? 'Editar ordem de pagamento' : 'Criar ordem de pagamento' }}</h1>
+  <p>
+    {{
+      isEdit
+        ? 'Enquanto estiver em Draft, todos os dados podem ser corrigidos.'
+        : 'A ordem será criada como Draft para permitir revisão antes do envio.'
+    }}
+  </p>
+</section>
+
+@if (loading()) {
+  <div class="feedback-card">Carregando ordem...</div>
+} @else {
+  <form class="form-card" [formGroup]="form" (ngSubmit)="save()">
+    @if (error()) {
+      <div class="alert" role="alert">{{ error() }}</div>
+    }
+
+    <div class="field full-width">
+      <label for="description">Descrição</label>
+      <input id="description" type="text" formControlName="description" autocomplete="off" />
+      @if (form.controls.description.touched && form.controls.description.hasError('required')) {
+        <small>Informe uma descrição.</small>
+      }
+    </div>
+
+    <div class="field">
+      <label for="amount">Valor</label>
+      <input id="amount" type="number" min="0.01" step="0.01" formControlName="amount" />
+      @if (form.controls.amount.touched && form.controls.amount.invalid) {
+        <small>Informe um valor maior que zero, com até duas casas decimais.</small>
+      }
+    </div>
+
+    <div class="field">
+      <label for="currency">Moeda</label>
+      <select id="currency" formControlName="currency">
+        @for (currency of currencies; track currency) {
+          <option [value]="currency">{{ currency }}</option>
+        }
+      </select>
+    </div>
+
+    <div class="field full-width">
+      <label for="beneficiary">Beneficiário</label>
+      <input id="beneficiary" type="text" formControlName="beneficiary" autocomplete="off" />
+      @if (form.controls.beneficiary.touched && form.controls.beneficiary.hasError('required')) {
+        <small>Informe o beneficiário.</small>
+      }
+    </div>
+
+    <aside class="draft-note full-width">
+      <strong>Por que começamos em Draft?</strong>
+      <span>
+        O rascunho permite revisar os dados antes de iniciar um processo financeiro assíncrono.
+      </span>
+    </aside>
+
+    <div class="actions full-width">
+      <a class="button ghost" [routerLink]="isEdit ? ['/payment-orders', id] : '/'">Cancelar</a>
+      @if (editable()) {
+        <button class="button primary" type="submit" [disabled]="saving()">
+          {{ saving() ? 'Salvando...' : isEdit ? 'Salvar alterações' : 'Criar rascunho' }}
+        </button>
+      }
+    </div>
+  </form>
+}
