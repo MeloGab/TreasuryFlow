@@ -80,6 +80,72 @@ services:
       start_period: 15s
     restart: unless-stopped
 
+  api:
+    build:
+      context: .
+      dockerfile: src/TreasuryFlow.Api/Dockerfile
+    image: treasuryflow-api:local
+    container_name: treasuryflow-api
+    hostname: treasuryflow-api
+    environment:
+      ASPNETCORE_ENVIRONMENT: "Production"
+      ASPNETCORE_HTTP_PORTS: "8080"
+      Database__ApplyMigrations: "true"
+      ConnectionStrings__TreasuryFlow: >-
+        Server=sqlserver,1433;
+        Database=TreasuryFlow;
+        User Id=sa;
+        Password=${MSSQL_SA_PASSWORD:?Set MSSQL_SA_PASSWORD in the .env file};
+        Encrypt=True;
+        TrustServerCertificate=True
+      RabbitMq__Enabled: "true"
+      RabbitMq__HostName: "rabbitmq"
+      RabbitMq__Port: "5672"
+      RabbitMq__UserName: "${RABBITMQ_DEFAULT_USER:?Set RABBITMQ_DEFAULT_USER in the .env file}"
+      RabbitMq__Password: "${RABBITMQ_DEFAULT_PASS:?Set RABBITMQ_DEFAULT_PASS in the .env file}"
+    ports:
+      - "127.0.0.1:8080:8080"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    restart: unless-stopped
+
+  worker:
+    build:
+      context: .
+      dockerfile: src/TreasuryFlow.Worker/Dockerfile
+    image: treasuryflow-worker:local
+    container_name: treasuryflow-worker
+    hostname: treasuryflow-worker
+    environment:
+      DOTNET_ENVIRONMENT: "Production"
+      ConnectionStrings__TreasuryFlow: >-
+        Server=sqlserver,1433;
+        Database=TreasuryFlow;
+        User Id=sa;
+        Password=${MSSQL_SA_PASSWORD:?Set MSSQL_SA_PASSWORD in the .env file};
+        Encrypt=True;
+        TrustServerCertificate=True
+      RabbitMq__Enabled: "true"
+      RabbitMq__HostName: "rabbitmq"
+      RabbitMq__Port: "5672"
+      RabbitMq__UserName: "${RABBITMQ_DEFAULT_USER:?Set RABBITMQ_DEFAULT_USER in the .env file}"
+      RabbitMq__Password: "${RABBITMQ_DEFAULT_PASS:?Set RABBITMQ_DEFAULT_PASS in the .env file}"
+      Minio__Endpoint: "minio:9000"
+      Minio__UseSsl: "false"
+      Minio__AccessKey: "${MINIO_ROOT_USER:?Set MINIO_ROOT_USER in the .env file}"
+      Minio__SecretKey: "${MINIO_ROOT_PASSWORD:?Set MINIO_ROOT_PASSWORD in the .env file}"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    restart: unless-stopped
+
 volumes:
   treasuryflow-sqlserver-data:
   treasuryflow-rabbitmq-data:

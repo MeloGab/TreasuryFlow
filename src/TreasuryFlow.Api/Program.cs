@@ -1,6 +1,8 @@
+using Microsoft.EntityFrameworkCore;
 using TreasuryFlow.Api.Common.ExceptionHandling;
 using TreasuryFlow.Application;
 using TreasuryFlow.Infrastructure;
+using TreasuryFlow.Infrastructure.Persistence;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -29,6 +31,17 @@ builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddOpenApi();
 
 var app = builder.Build();
+
+if (app.Configuration.GetValue<bool>(
+        "Database:ApplyMigrations"))
+{
+    await using var scope = app.Services.CreateAsyncScope();
+
+    var dbContext = scope.ServiceProvider
+        .GetRequiredService<TreasuryFlowDbContext>();
+
+    await dbContext.Database.MigrateAsync();
+}
 
 if (app.Environment.IsDevelopment())
 {
