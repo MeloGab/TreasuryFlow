@@ -15,7 +15,7 @@ public sealed class PaymentOrderLifecycleTests(
     : IClassFixture<TreasuryFlowApiFactory>
 {
     [Fact]
-    public async Task CompleteFlow_ShouldPersistCompletedPaymentOrder()
+    public async Task Submit_WhenDraft_ShouldPersistPendingPaymentOrder()
     {
         await factory.ResetDatabaseAsync();
 
@@ -28,66 +28,54 @@ public sealed class PaymentOrderLifecycleTests(
             $"/api/payment-orders/{paymentOrder.Id}/submit",
             content: null);
 
-        var startProcessingResponse = await client.PostAsync(
-            $"/api/payment-orders/{paymentOrder.Id}/start-processing",
-            content: null);
-
-        var completeResponse = await client.PostAsync(
-            $"/api/payment-orders/{paymentOrder.Id}/complete",
-            content: null);
-
         Assert.Equal(
             HttpStatusCode.NoContent,
             submitResponse.StatusCode);
-
-        Assert.Equal(
-            HttpStatusCode.NoContent,
-            startProcessingResponse.StatusCode);
-
-        Assert.Equal(
-            HttpStatusCode.NoContent,
-            completeResponse.StatusCode);
 
         var persistedPaymentOrder =
             await LoadPaymentOrderAsync(paymentOrder.Id);
 
         Assert.Equal(
-            PaymentOrderStatus.Completed,
+            PaymentOrderStatus.Pending,
             persistedPaymentOrder.Status);
 
-        Assert.NotNull(
+        Assert.Null(
             persistedPaymentOrder.ProcessedAt);
 
         await AssertSingleSubmissionOutboxMessageAsync(
             paymentOrder.Id);
     }
 
-    [Fact]
-    public async Task FailFlow_ShouldPersistFailedPaymentOrder()
+    [Theory]
+    [InlineData("start-processing")]
+    [InlineData("complete")]
+    [InlineData("fail")]
+    public async Task InternalLifecycleEndpoint_ShouldNotBeExposed(
+        string operation)
     {
         await factory.ResetDatabaseAsync();
 
         var paymentOrder = await PersistPaymentOrderAsync(
-            PaymentOrderStatus.Processing);
+            PaymentOrderStatus.Draft);
 
         using var client = factory.CreateClient();
 
         var response = await client.PostAsync(
-            $"/api/payment-orders/{paymentOrder.Id}/fail",
+            $"/api/payment-orders/{paymentOrder.Id}/{operation}",
             content: null);
 
         Assert.Equal(
-            HttpStatusCode.NoContent,
+            HttpStatusCode.NotFound,
             response.StatusCode);
 
         var persistedPaymentOrder =
             await LoadPaymentOrderAsync(paymentOrder.Id);
 
         Assert.Equal(
-            PaymentOrderStatus.Failed,
+            PaymentOrderStatus.Draft,
             persistedPaymentOrder.Status);
 
-        Assert.NotNull(
+        Assert.Null(
             persistedPaymentOrder.ProcessedAt);
     }
 
@@ -151,45 +139,6 @@ public sealed class PaymentOrderLifecycleTests(
             problemDetails.Detail);
     }
 
-    [Fact]
-    public async Task StartProcessing_WhenPaymentOrderIsDraft_ShouldReturnConflict()
-    {
-        await factory.ResetDatabaseAsync();
-
-        var paymentOrder = await PersistPaymentOrderAsync(
-            PaymentOrderStatus.Draft);
-
-        using var client = factory.CreateClient();
-
-        var response = await client.PostAsync(
-            $"/api/payment-orders/{paymentOrder.Id}/start-processing",
-            content: null);
-
-        var problemDetails = await response.Content
-            .ReadFromJsonAsync<ProblemDetails>();
-
-        Assert.Equal(
-            HttpStatusCode.Conflict,
-            response.StatusCode);
-
-        Assert.NotNull(problemDetails);
-
-        Assert.Equal(
-            "A domain rule was violated.",
-            problemDetails.Title);
-
-        Assert.Equal(
-            "Only pending payment orders can start processing.",
-            problemDetails.Detail);
-
-        var persistedPaymentOrder =
-            await LoadPaymentOrderAsync(paymentOrder.Id);
-
-        Assert.Equal(
-            PaymentOrderStatus.Draft,
-            persistedPaymentOrder.Status);
-    }
-
     private async Task<PaymentOrder> PersistPaymentOrderAsync(
         PaymentOrderStatus status)
     {
@@ -206,11 +155,6 @@ public sealed class PaymentOrderLifecycleTests(
 
             case PaymentOrderStatus.Pending:
                 paymentOrder.Submit();
-                break;
-
-            case PaymentOrderStatus.Processing:
-                paymentOrder.Submit();
-                paymentOrder.StartProcessing();
                 break;
 
             default:

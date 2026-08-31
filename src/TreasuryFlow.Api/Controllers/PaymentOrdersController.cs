@@ -133,63 +133,6 @@ public sealed class PaymentOrdersController(
         return NoContent();
     }
 
-    [HttpPost("{id:guid}/start-processing")]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
-    [ProducesResponseType<ProblemDetails>(
-        StatusCodes.Status404NotFound)]
-    [ProducesResponseType<ProblemDetails>(
-        StatusCodes.Status409Conflict)]
-    [ProducesResponseType<ProblemDetails>(
-        StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> StartProcessing(
-        Guid id,
-        CancellationToken cancellationToken)
-    {
-        await sender.Send(
-            new StartProcessingPaymentOrderCommand(id),
-            cancellationToken);
-
-        return NoContent();
-    }
-
-    [HttpPost("{id:guid}/complete")]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
-    [ProducesResponseType<ProblemDetails>(
-        StatusCodes.Status404NotFound)]
-    [ProducesResponseType<ProblemDetails>(
-        StatusCodes.Status409Conflict)]
-    [ProducesResponseType<ProblemDetails>(
-        StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> Complete(
-        Guid id,
-        CancellationToken cancellationToken)
-    {
-        await sender.Send(
-            new CompletePaymentOrderCommand(id),
-            cancellationToken);
-
-        return NoContent();
-    }
-
-    [HttpPost("{id:guid}/fail")]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
-    [ProducesResponseType<ProblemDetails>(
-        StatusCodes.Status404NotFound)]
-    [ProducesResponseType<ProblemDetails>(
-        StatusCodes.Status409Conflict)]
-    [ProducesResponseType<ProblemDetails>(
-        StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> Fail(
-        Guid id,
-        CancellationToken cancellationToken)
-    {
-        await sender.Send(
-            new FailPaymentOrderCommand(id),
-            cancellationToken);
-
-        return NoContent();
-    }
-
     [HttpPost("{id:guid}/cancel")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType<ProblemDetails>(
