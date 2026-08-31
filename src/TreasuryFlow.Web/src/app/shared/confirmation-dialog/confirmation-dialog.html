@@ -1,0 +1,25 @@
+<div class="dialog-backdrop" (click)="cancel()">
+  <section
+    class="dialog-card"
+    role="alertdialog"
+    aria-modal="true"
+    aria-labelledby="confirmation-title"
+    aria-describedby="confirmation-message"
+    (click)="$event.stopPropagation()"
+  >
+    <div class="dialog-icon" aria-hidden="true">!</div>
+    <div>
+      <h2 id="confirmation-title">{{ title() }}</h2>
+      <p id="confirmation-message">{{ message() }}</p>
+    </div>
+
+    <div class="dialog-actions">
+      <button class="button ghost" type="button" (click)="cancel()" autofocus>
+        {{ cancelLabel() }}
+      </button>
+      <button class="button danger" type="button" (click)="confirm()">
+        {{ confirmLabel() }}
+      </button>
+    </div>
+  </section>
+</div>

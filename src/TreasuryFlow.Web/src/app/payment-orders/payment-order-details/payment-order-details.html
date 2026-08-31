@@ -1,11 +1,11 @@
-<a class="back-link" routerLink="/">← Voltar ao início</a>
+<a class="back-link" routerLink="/">← {{ i18n.t('details.back') }}</a>
 
 @if (loading()) {
-  <div class="feedback-card">Carregando ordem...</div>
+  <div class="feedback-card">{{ i18n.t('details.loading') }}</div>
 } @else if (order(); as paymentOrder) {
   <section class="page-header">
     <div>
-      <span class="eyebrow">Ordem de pagamento</span>
+      <span class="eyebrow">{{ i18n.t('details.eyebrow') }}</span>
       <h1>{{ paymentOrder.description }}</h1>
       <code>{{ paymentOrder.id }}</code>
     </div>
@@ -15,36 +15,36 @@
     </div>
   </section>
 
+  <app-payment-order-progress [status]="paymentOrder.status" />
+
   @if (error()) {
     <div class="alert" role="alert">{{ error() }}</div>
   }
 
-  <section class="details-grid" aria-label="Dados da ordem">
+  <section class="details-grid" [attr.aria-label]="i18n.t('details.dataAria')">
     <article class="amount-card">
-      <span>Valor da ordem</span>
-      <strong>{{
-        paymentOrder.amount | currency: paymentOrder.currency : 'symbol' : '1.2-2'
-      }}</strong>
+      <span>{{ i18n.t('details.amount') }}</span>
+      <strong>{{ i18n.formatCurrency(paymentOrder.amount, paymentOrder.currency) }}</strong>
       <small>{{ paymentOrder.currency }}</small>
     </article>
 
     <article class="detail-card">
-      <span>Beneficiário</span>
+      <span>{{ i18n.t('details.beneficiary') }}</span>
       <strong>{{ paymentOrder.beneficiary }}</strong>
     </article>
 
     <article class="detail-card">
-      <span>Criada em</span>
-      <strong>{{ paymentOrder.createdAt | date: 'dd/MM/yyyy HH:mm' }}</strong>
+      <span>{{ i18n.t('details.createdAt') }}</span>
+      <strong>{{ i18n.formatDate(paymentOrder.createdAt) }}</strong>
     </article>
 
     <article class="detail-card">
-      <span>Processada em</span>
+      <span>{{ i18n.t('details.processedAt') }}</span>
       <strong>
         {{
           paymentOrder.processedAt
-            ? (paymentOrder.processedAt | date: 'dd/MM/yyyy HH:mm')
-            : 'Ainda não processada'
+            ? i18n.formatDate(paymentOrder.processedAt)
+            : i18n.t('details.notProcessed')
         }}
       </strong>
     </article>
@@ -53,37 +53,48 @@
   @if (paymentOrder.status === 'Pending' || paymentOrder.status === 'Processing') {
     <div class="processing-note">
       <span class="pulse" aria-hidden="true"></span>
-      Esta página está acompanhando automaticamente o processamento.
+      {{ i18n.t('details.tracking') }}
     </div>
   }
 
-  <section class="actions" aria-label="Ações disponíveis">
-    <button class="button ghost" type="button" (click)="refresh()" [disabled]="acting()">
-      Atualizar
-    </button>
-
+  <section class="actions" [attr.aria-label]="i18n.t('details.actionsAria')">
     @if (paymentOrder.status === 'Draft') {
       <button class="button danger" type="button" (click)="deleteDraft()" [disabled]="acting()">
-        Excluir rascunho
+        {{ i18n.t('details.deleteDraft') }}
       </button>
       <a class="button secondary" [routerLink]="['/payment-orders', paymentOrder.id, 'edit']">
-        Editar
+        {{ i18n.t('details.edit') }}
       </a>
       <button class="button primary" type="button" (click)="submit()" [disabled]="acting()">
-        {{ acting() ? 'Enviando...' : 'Enviar para processamento' }}
+        {{ acting() ? i18n.t('details.submitting') : i18n.t('details.submit') }}
       </button>
     }
 
     @if (paymentOrder.status === 'Pending') {
       <button class="button danger" type="button" (click)="cancelPending()" [disabled]="acting()">
-        Cancelar ordem
+        {{ i18n.t('details.cancelPending') }}
       </button>
     }
   </section>
 } @else {
   <div class="feedback-card error">
-    <strong>Não foi possível exibir a ordem.</strong>
-    <span>{{ error() ?? 'Verifique o identificador informado.' }}</span>
-    <a class="button secondary" routerLink="/">Voltar ao início</a>
+    <strong>{{ i18n.t('details.notDisplayed') }}</strong>
+    <span>{{ error() ?? i18n.t('details.verifyId') }}</span>
+    <a class="button secondary" routerLink="/">{{ i18n.t('details.backHome') }}</a>
   </div>
+}
+
+@if (confirmation(); as confirmationKind) {
+  <app-confirmation-dialog
+    [title]="i18n.t(confirmationKind === 'deleteDraft' ? 'modal.deleteTitle' : 'modal.cancelTitle')"
+    [message]="
+      i18n.t(confirmationKind === 'deleteDraft' ? 'modal.deleteMessage' : 'modal.cancelMessage')
+    "
+    [confirmLabel]="
+      i18n.t(confirmationKind === 'deleteDraft' ? 'modal.confirmDelete' : 'modal.confirmCancel')
+    "
+    [cancelLabel]="i18n.t('modal.keepOrder')"
+    (confirmed)="confirmAction()"
+    (cancelled)="closeConfirmation()"
+  />
 }

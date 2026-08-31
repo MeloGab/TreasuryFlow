@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using TreasuryFlow.Domain.PaymentOrders;
 using TreasuryFlow.Domain.PaymentOrders.ValueObjects;
 
@@ -8,6 +9,22 @@ namespace TreasuryFlow.Infrastructure.Persistence.Configurations;
 public sealed class PaymentOrderConfiguration
     : IEntityTypeConfiguration<PaymentOrder>
 {
+    private static readonly ValueConverter<DateTime, DateTime>
+        UtcDateTimeConverter = new(
+            dateTime => dateTime,
+            dateTime => DateTime.SpecifyKind(
+                dateTime,
+                DateTimeKind.Utc));
+
+    private static readonly ValueConverter<DateTime?, DateTime?>
+        NullableUtcDateTimeConverter = new(
+            dateTime => dateTime,
+            dateTime => dateTime.HasValue
+                ? DateTime.SpecifyKind(
+                    dateTime.Value,
+                    DateTimeKind.Utc)
+                : null);
+
     public void Configure(
         EntityTypeBuilder<PaymentOrder> builder)
     {
@@ -36,10 +53,12 @@ public sealed class PaymentOrderConfiguration
 
         builder.Property(
                 paymentOrder => paymentOrder.CreatedAt)
+            .HasConversion(UtcDateTimeConverter)
             .IsRequired();
 
         builder.Property(
-            paymentOrder => paymentOrder.ProcessedAt);
+                paymentOrder => paymentOrder.ProcessedAt)
+            .HasConversion(NullableUtcDateTimeConverter);
 
         builder.ComplexProperty<Money>(
             paymentOrder => paymentOrder.Amount,

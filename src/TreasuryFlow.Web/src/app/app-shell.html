@@ -1,24 +1,58 @@
 <div class="app-shell">
   <header class="topbar">
-    <a class="brand" routerLink="/" aria-label="Ir para o início">
+    <a class="brand" routerLink="/" [attr.aria-label]="i18n.t('nav.home')">
       <span class="brand-mark" aria-hidden="true">TF</span>
       <span>
         <strong>TreasuryFlow</strong>
-        <small>Ordens de pagamento</small>
+        <small>{{ i18n.t('brand.subtitle') }}</small>
       </span>
     </a>
 
-    <nav aria-label="Navegação principal">
-      <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
-        Início
-      </a>
-      <a class="primary-link" routerLink="/payment-orders/new">Nova ordem</a>
-    </nav>
+    <div class="topbar-actions">
+      <div class="preferences" role="group" [attr.aria-label]="i18n.t('language.aria')">
+        <select
+          class="language-select"
+          [value]="preferences.locale()"
+          (change)="changeLocale($event)"
+          [attr.aria-label]="i18n.t('language.aria')"
+        >
+          <option value="pt-BR">{{ i18n.t('language.portuguese') }}</option>
+          <option value="en-US">{{ i18n.t('language.english') }}</option>
+        </select>
+        <button
+          class="theme-toggle"
+          type="button"
+          (click)="preferences.toggleTheme()"
+          [attr.aria-label]="
+            preferences.theme() === 'light' ? i18n.t('theme.toDark') : i18n.t('theme.toLight')
+          "
+          [attr.title]="
+            preferences.theme() === 'light' ? i18n.t('theme.toDark') : i18n.t('theme.toLight')
+          "
+        >
+          <span aria-hidden="true">{{ preferences.theme() === 'light' ? '☾' : '☀' }}</span>
+          <span class="theme-label">
+            {{
+              preferences.theme() === 'light'
+                ? i18n.t('theme.darkShort')
+                : i18n.t('theme.lightShort')
+            }}
+          </span>
+        </button>
+      </div>
+
+      <nav [attr.aria-label]="i18n.t('nav.aria')">
+        <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
+          {{ i18n.t('nav.home') }}
+        </a>
+        <a class="primary-link" routerLink="/payment-orders/new">{{ i18n.t('nav.newOrder') }}</a>
+      </nav>
+    </div>
   </header>
 
   <main>
     <router-outlet />
   </main>
 
-  <footer>TreasuryFlow · Fluxo de pagamentos rastreável</footer>
+  <footer>TreasuryFlow · {{ i18n.t('footer.tagline') }}</footer>
 </div>

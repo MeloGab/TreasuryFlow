@@ -1,22 +1,19 @@
 <section class="hero">
-  <div class="eyebrow">Operações financeiras com rastreabilidade</div>
-  <h1>Acompanhe uma ordem do rascunho ao processamento.</h1>
-  <p>
-    Crie, revise e envie ordens de pagamento. O processamento acontece em segundo plano, preservando
-    o histórico de cada decisão.
-  </p>
-  <a class="button primary" routerLink="/payment-orders/new">Criar nova ordem</a>
+  <div class="eyebrow">{{ i18n.t('home.eyebrow') }}</div>
+  <h1>{{ i18n.t('home.title') }}</h1>
+  <p>{{ i18n.t('home.description') }}</p>
+  <a class="button primary" routerLink="/payment-orders/new">{{ i18n.t('home.create') }}</a>
 </section>
 
 <section class="lookup" aria-labelledby="lookup-title">
   <div>
     <span class="section-number">01</span>
-    <h2 id="lookup-title">Localizar uma ordem</h2>
-    <p>Informe o identificador recebido na criação para consultar o estado atual.</p>
+    <h2 id="lookup-title">{{ i18n.t('home.lookupTitle') }}</h2>
+    <p>{{ i18n.t('home.lookupHelp') }}</p>
   </div>
 
   <form [formGroup]="form" (ngSubmit)="findPaymentOrder()">
-    <label for="payment-order-id">ID da ordem</label>
+    <label for="payment-order-id">{{ i18n.t('home.orderId') }}</label>
     <div class="input-row">
       <input
         id="payment-order-id"
@@ -25,17 +22,19 @@
         placeholder="00000000-0000-0000-0000-000000000000"
         formControlName="paymentOrderId"
       />
-      <button class="button secondary" type="submit">Consultar</button>
+      <button class="button secondary" type="submit">{{ i18n.t('home.search') }}</button>
     </div>
     @if (paymentOrderId.touched && paymentOrderId.hasError('required')) {
-      <small class="field-error">Informe o ID da ordem.</small>
+      <small class="field-error">{{ i18n.t('home.idRequired') }}</small>
     } @else if (paymentOrderId.touched && paymentOrderId.hasError('pattern')) {
-      <small class="field-error">Use um identificador UUID válido.</small>
+      <small class="field-error">{{ i18n.t('home.idInvalid') }}</small>
     }
   </form>
 </section>
 
-<section class="flow" aria-label="Fluxo de uma ordem de pagamento">
-  <span>Draft</span><i>→</i><span>Pending</span><i>→</i><span>Processing</span><i>→</i
-  ><span>Completed</span>
+<section class="flow" [attr.aria-label]="i18n.t('home.flowAria')">
+  <span>{{ i18n.t('status.Draft') }}</span
+  ><i>→</i><span>{{ i18n.t('status.Pending') }}</span
+  ><i>→</i><span>{{ i18n.t('status.Processing') }}</span
+  ><i>→</i><span>{{ i18n.t('status.Completed') }}</span>
 </section>

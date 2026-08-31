@@ -1,0 +1,12 @@
+<ol class="progress" [attr.aria-label]="i18n.t('details.progressAria')">
+  @for (step of steps; track step) {
+    @let stepState = state(step);
+    <li [attr.data-state]="stepState" [attr.aria-current]="stepState === 'active' ? 'step' : null">
+      <span class="progress-marker" aria-hidden="true">{{ symbol(stepState) }}</span>
+      <span class="progress-label">{{ i18n.statusLabel(step) }}</span>
+      @if (stepState === 'active') {
+        <small>{{ i18n.t('details.currentStep') }}</small>
+      }
+    </li>
+  }
+</ol>
