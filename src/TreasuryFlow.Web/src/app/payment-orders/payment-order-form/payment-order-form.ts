@@ -3,6 +3,7 @@ import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { finalize, map } from 'rxjs';
 import { getApiErrorMessage } from '../../core/api-error';
+import { I18nService } from '../../core/i18n.service';
 import { PaymentOrdersApiService } from '../../core/payment-orders-api.service';
 import { SavePaymentOrderRequest } from '../payment-order.model';
 
@@ -16,6 +17,7 @@ export class PaymentOrderForm implements OnInit {
   private readonly api = inject(PaymentOrdersApiService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  protected readonly i18n = inject(I18nService);
   protected readonly id = this.route.snapshot.paramMap.get('id');
 
   protected readonly isEdit = this.id !== null;
@@ -78,7 +80,7 @@ export class PaymentOrderForm implements OnInit {
         void this.router.navigate(['/payment-orders', paymentOrderId]);
       },
       error: (error: unknown) => {
-        this.error.set(getApiErrorMessage(error, 'Não foi possível salvar a ordem de pagamento.'));
+        this.error.set(getApiErrorMessage(error, this.i18n.t('error.save')));
       },
     });
   }
@@ -99,14 +101,12 @@ export class PaymentOrderForm implements OnInit {
           if (paymentOrder.status !== 'Draft') {
             this.editable.set(false);
             this.form.disable();
-            this.error.set('Somente ordens em rascunho podem ser editadas.');
+            this.error.set(this.i18n.t('error.onlyDraftEditable'));
           }
         },
         error: (error: unknown) => {
           this.editable.set(false);
-          this.error.set(
-            getApiErrorMessage(error, 'Não foi possível carregar a ordem de pagamento.'),
-          );
+          this.error.set(getApiErrorMessage(error, this.i18n.t('error.load')));
         },
       });
   }

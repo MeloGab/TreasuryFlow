@@ -1,0 +1,122 @@
+.progress {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  margin: 0 0 2rem;
+  padding: 1.25rem;
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  background: var(--surface);
+  list-style: none;
+  box-shadow: var(--shadow);
+}
+
+.progress li {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: 0.35rem;
+  min-width: 0;
+  color: var(--muted);
+  text-align: center;
+}
+
+.progress li:not(:last-child)::after {
+  position: absolute;
+  top: 0.85rem;
+  left: calc(50% + 1.1rem);
+  width: calc(100% - 2.2rem);
+  height: 0.18rem;
+  border-radius: 999px;
+  background: var(--border);
+  content: '';
+  transition: background 350ms ease;
+}
+
+.progress li[data-state='complete']:not(:last-child)::after {
+  background: var(--brand);
+}
+
+.progress-marker {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  width: 1.9rem;
+  height: 1.9rem;
+  place-items: center;
+  border: 2px solid var(--border-strong);
+  border-radius: 50%;
+  color: var(--muted);
+  background: var(--surface);
+  font-weight: 900;
+  transition:
+    color 250ms ease,
+    border-color 250ms ease,
+    background 250ms ease;
+}
+
+.progress li[data-state='complete'] .progress-marker,
+.progress li[data-state='active'] .progress-marker {
+  border-color: var(--brand);
+  color: white;
+  background: var(--brand);
+}
+
+.progress li[data-state='active'] .progress-marker {
+  animation: progress-pulse 1.8s ease-in-out infinite;
+}
+
+.progress li[data-state='failed'] .progress-marker {
+  border-color: var(--danger);
+  color: white;
+  background: var(--danger);
+}
+
+.progress li[data-state='halted'] {
+  opacity: 0.65;
+}
+
+.progress-label {
+  overflow-wrap: anywhere;
+  font-size: 0.8rem;
+  font-weight: 750;
+}
+
+.progress li[data-state='complete'] .progress-label,
+.progress li[data-state='active'] .progress-label {
+  color: var(--brand-dark);
+}
+
+.progress li[data-state='failed'] .progress-label {
+  color: var(--danger);
+}
+
+.progress small {
+  color: var(--muted);
+  font-size: 0.68rem;
+}
+
+@keyframes progress-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 var(--focus);
+  }
+  50% {
+    box-shadow: 0 0 0 0.45rem transparent;
+  }
+}
+
+@media (max-width: 42rem) {
+  .progress {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+  .progress li {
+    grid-template-columns: auto 1fr;
+    justify-items: start;
+    align-items: center;
+    text-align: left;
+  }
+  .progress li::after {
+    display: none;
+  }
+}

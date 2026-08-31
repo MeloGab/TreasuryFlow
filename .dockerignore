@@ -4,6 +4,8 @@
 .vscode
 **/bin
 **/obj
+**/node_modules
+**/dist
 **/TestResults
 tests
 .env

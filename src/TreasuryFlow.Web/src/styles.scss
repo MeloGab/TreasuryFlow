@@ -3,6 +3,7 @@
   --ink: #172033;
   --muted: #627087;
   --brand: #0f766e;
+  --brand-hover: #115e59;
   --brand-dark: #115e59;
   --brand-soft: #e8f7f4;
   --surface: #ffffff;
@@ -14,6 +15,17 @@
   --danger-soft: #fff1f0;
   --danger-border: #f4a6a0;
   --shadow: 0 20px 55px rgba(30, 41, 59, 0.08);
+  --page: #f8fafc;
+  --page-glow: rgba(15, 118, 110, 0.08);
+  --topbar: rgba(248, 250, 252, 0.92);
+  --input: #ffffff;
+  --pending-border: #fbbf24;
+  --pending-surface: #fffbeb;
+  --processing-border: #60a5fa;
+  --processing-surface: #eff6ff;
+  --processing-ink: #1e40af;
+  --completed-border: #34d399;
+  --completed-surface: #ecfdf5;
   font-family:
     Inter,
     ui-sans-serif,
@@ -25,6 +37,36 @@
   font-synthesis: none;
 }
 
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --ink: #e7edf6;
+  --muted: #a8b5c7;
+  --brand: #0f766e;
+  --brand-hover: #0d9488;
+  --brand-dark: #5eead4;
+  --brand-soft: #123b3a;
+  --surface: #172033;
+  --surface-subtle: #202b3d;
+  --border: #344258;
+  --border-strong: #59677b;
+  --focus: rgba(45, 212, 191, 0.28);
+  --danger: #fda4af;
+  --danger-soft: #3f1d25;
+  --danger-border: #9f4450;
+  --shadow: 0 20px 55px rgba(0, 0, 0, 0.28);
+  --page: #0b1120;
+  --page-glow: rgba(20, 184, 166, 0.1);
+  --topbar: rgba(11, 17, 32, 0.92);
+  --input: #111827;
+  --pending-border: #d97706;
+  --pending-surface: #352812;
+  --processing-border: #3b82f6;
+  --processing-surface: #172554;
+  --processing-ink: #bfdbfe;
+  --completed-border: #10b981;
+  --completed-surface: #0f3329;
+}
+
 * {
   box-sizing: border-box;
 }
@@ -32,15 +74,17 @@
 html {
   min-width: 20rem;
   min-height: 100%;
-  background: #f8fafc;
+  background: var(--page);
 }
 
 body {
   min-height: 100vh;
   margin: 0;
   color: var(--ink);
-  background:
-    radial-gradient(circle at 10% 0%, rgba(15, 118, 110, 0.08), transparent 24rem), #f8fafc;
+  background: radial-gradient(circle at 10% 0%, var(--page-glow), transparent 24rem), var(--page);
+  transition:
+    color 180ms ease,
+    background-color 180ms ease;
 }
 
 button,
@@ -95,7 +139,7 @@ select:focus-visible {
 }
 
 .button.primary:hover:not(:disabled) {
-  background: var(--brand-dark);
+  background: var(--brand-hover);
 }
 
 .button.secondary {
@@ -119,4 +163,15 @@ select:focus-visible {
 ::selection {
   color: white;
   background: var(--brand);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

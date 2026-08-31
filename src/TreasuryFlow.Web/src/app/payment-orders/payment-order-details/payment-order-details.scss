@@ -51,16 +51,16 @@ code {
   border-color: #cbd5e1;
 }
 .status[data-status='Pending'] {
-  border-color: #fbbf24;
-  background: #fffbeb;
+  border-color: var(--pending-border);
+  background: var(--pending-surface);
 }
 .status[data-status='Processing'] {
-  border-color: #60a5fa;
-  background: #eff6ff;
+  border-color: var(--processing-border);
+  background: var(--processing-surface);
 }
 .status[data-status='Completed'] {
-  border-color: #34d399;
-  background: #ecfdf5;
+  border-color: var(--completed-border);
+  background: var(--completed-surface);
 }
 .status[data-status='Failed'] {
   border-color: var(--danger-border);
@@ -68,7 +68,7 @@ code {
 }
 .status[data-status='Cancelled'] {
   border-color: #cbd5e1;
-  background: #f8fafc;
+  background: var(--surface-subtle);
 }
 
 .details-grid {
@@ -115,8 +115,8 @@ code {
   margin-top: 1rem;
   padding: 0.9rem 1rem;
   border-radius: 0.7rem;
-  color: #1e40af;
-  background: #eff6ff;
+  color: var(--processing-ink);
+  background: var(--processing-surface);
   font-size: 0.88rem;
 }
 

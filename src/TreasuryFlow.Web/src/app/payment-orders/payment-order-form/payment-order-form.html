@@ -1,18 +1,18 @@
 <section class="page-header">
-  <a class="back-link" [routerLink]="isEdit ? ['/payment-orders', id] : '/'">← Voltar</a>
-  <span class="eyebrow">{{ isEdit ? 'Revisar rascunho' : 'Nova operação' }}</span>
-  <h1>{{ isEdit ? 'Editar ordem de pagamento' : 'Criar ordem de pagamento' }}</h1>
+  <a class="back-link" [routerLink]="isEdit ? ['/payment-orders', id] : '/'"
+    >← {{ i18n.t('form.back') }}</a
+  >
+  <span class="eyebrow">{{
+    isEdit ? i18n.t('form.reviewEyebrow') : i18n.t('form.newEyebrow')
+  }}</span>
+  <h1>{{ isEdit ? i18n.t('form.editTitle') : i18n.t('form.createTitle') }}</h1>
   <p>
-    {{
-      isEdit
-        ? 'Enquanto estiver em Draft, todos os dados podem ser corrigidos.'
-        : 'A ordem será criada como Draft para permitir revisão antes do envio.'
-    }}
+    {{ isEdit ? i18n.t('form.editDescription') : i18n.t('form.createDescription') }}
   </p>
 </section>
 
 @if (loading()) {
-  <div class="feedback-card">Carregando ordem...</div>
+  <div class="feedback-card">{{ i18n.t('form.loading') }}</div>
 } @else {
   <form class="form-card" [formGroup]="form" (ngSubmit)="save()">
     @if (error()) {
@@ -20,23 +20,23 @@
     }
 
     <div class="field full-width">
-      <label for="description">Descrição</label>
+      <label for="description">{{ i18n.t('form.description') }}</label>
       <input id="description" type="text" formControlName="description" autocomplete="off" />
       @if (form.controls.description.touched && form.controls.description.hasError('required')) {
-        <small>Informe uma descrição.</small>
+        <small>{{ i18n.t('form.descriptionRequired') }}</small>
       }
     </div>
 
     <div class="field">
-      <label for="amount">Valor</label>
+      <label for="amount">{{ i18n.t('form.amount') }}</label>
       <input id="amount" type="number" min="0.01" step="0.01" formControlName="amount" />
       @if (form.controls.amount.touched && form.controls.amount.invalid) {
-        <small>Informe um valor maior que zero, com até duas casas decimais.</small>
+        <small>{{ i18n.t('form.amountInvalid') }}</small>
       }
     </div>
 
     <div class="field">
-      <label for="currency">Moeda</label>
+      <label for="currency">{{ i18n.t('form.currency') }}</label>
       <select id="currency" formControlName="currency">
         @for (currency of currencies; track currency) {
           <option [value]="currency">{{ currency }}</option>
@@ -45,25 +45,31 @@
     </div>
 
     <div class="field full-width">
-      <label for="beneficiary">Beneficiário</label>
+      <label for="beneficiary">{{ i18n.t('form.beneficiary') }}</label>
       <input id="beneficiary" type="text" formControlName="beneficiary" autocomplete="off" />
       @if (form.controls.beneficiary.touched && form.controls.beneficiary.hasError('required')) {
-        <small>Informe o beneficiário.</small>
+        <small>{{ i18n.t('form.beneficiaryRequired') }}</small>
       }
     </div>
 
     <aside class="draft-note full-width">
-      <strong>Por que começamos em Draft?</strong>
-      <span>
-        O rascunho permite revisar os dados antes de iniciar um processo financeiro assíncrono.
-      </span>
+      <strong>{{ i18n.t('form.draftWhy') }}</strong>
+      <span>{{ i18n.t('form.draftExplanation') }}</span>
     </aside>
 
     <div class="actions full-width">
-      <a class="button ghost" [routerLink]="isEdit ? ['/payment-orders', id] : '/'">Cancelar</a>
+      <a class="button ghost" [routerLink]="isEdit ? ['/payment-orders', id] : '/'">{{
+        i18n.t('form.cancel')
+      }}</a>
       @if (editable()) {
         <button class="button primary" type="submit" [disabled]="saving()">
-          {{ saving() ? 'Salvando...' : isEdit ? 'Salvar alterações' : 'Criar rascunho' }}
+          {{
+            saving()
+              ? i18n.t('form.saving')
+              : isEdit
+                ? i18n.t('form.saveChanges')
+                : i18n.t('form.createDraft')
+          }}
         </button>
       }
     </div>

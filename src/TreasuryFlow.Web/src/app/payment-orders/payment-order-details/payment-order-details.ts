@@ -1,38 +1,26 @@
-import { CurrencyPipe, DatePipe } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
 import { Component, DestroyRef, inject, OnInit, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { finalize, Observable } from 'rxjs';
 import { getApiErrorMessage } from '../../core/api-error';
+import { I18nService } from '../../core/i18n.service';
 import { PaymentOrdersApiService } from '../../core/payment-orders-api.service';
+import { ConfirmationDialog } from '../../shared/confirmation-dialog/confirmation-dialog';
+import { PaymentOrderProgress } from '../payment-order-progress/payment-order-progress';
 import { PaymentOrder, PaymentOrderStatus } from '../payment-order.model';
 
-const statusLabels: Record<PaymentOrderStatus, string> = {
-  Draft: 'Rascunho',
-  Pending: 'Pendente',
-  Processing: 'Em processamento',
-  Completed: 'Concluída',
-  Failed: 'Falhou',
-  Cancelled: 'Cancelada',
-};
-
-const statusDescriptions: Record<PaymentOrderStatus, string> = {
-  Draft: 'Os dados ainda podem ser revisados antes do envio.',
-  Pending: 'A ordem aguarda o Worker iniciar o processamento.',
-  Processing: 'O processamento financeiro está acontecendo em segundo plano.',
-  Completed: 'A ordem foi processada com sucesso.',
-  Failed: 'O processamento terminou com falha.',
-  Cancelled: 'A ordem foi preservada, mas não seguirá para processamento.',
-};
+type ConfirmationKind = 'deleteDraft' | 'cancelPending';
 
 @Component({
   selector: 'app-payment-order-details',
-  imports: [CurrencyPipe, DatePipe, RouterLink],
+  imports: [ConfirmationDialog, PaymentOrderProgress, RouterLink],
   templateUrl: './payment-order-details.html',
   styleUrl: './payment-order-details.scss',
 })
 export class PaymentOrderDetails implements OnInit {
   private readonly api = inject(PaymentOrdersApiService);
   private readonly destroyRef = inject(DestroyRef);
+  protected readonly i18n = inject(I18nService);
   private readonly id = inject(ActivatedRoute).snapshot.paramMap.get('id') ?? '';
   private refreshTimer: ReturnType<typeof setTimeout> | undefined;
 
@@ -40,6 +28,7 @@ export class PaymentOrderDetails implements OnInit {
   protected readonly loading = signal(true);
   protected readonly acting = signal(false);
   protected readonly error = signal<string | null>(null);
+  protected readonly confirmation = signal<ConfirmationKind | null>(null);
 
   constructor() {
     this.destroyRef.onDestroy(() => this.clearRefreshTimer());
@@ -50,42 +39,53 @@ export class PaymentOrderDetails implements OnInit {
   }
 
   protected statusLabel(status: PaymentOrderStatus): string {
-    return statusLabels[status];
+    return this.i18n.statusLabel(status);
   }
 
   protected statusDescription(status: PaymentOrderStatus): string {
-    return statusDescriptions[status];
+    return this.i18n.statusDescription(status);
   }
 
   protected submit(): void {
-    this.runAction(this.api.submit(this.id), 'Não foi possível enviar a ordem para processamento.');
+    this.runAction(this.api.submit(this.id), this.i18n.t('error.submit'));
   }
 
   protected deleteDraft(): void {
-    const confirmed = window.confirm(
-      'Excluir este rascunho? O registro será mantido como cancelado para fins de rastreabilidade.',
-    );
-
-    if (confirmed) {
-      this.runAction(this.api.cancel(this.id), 'Não foi possível excluir o rascunho.');
-    }
+    this.confirmation.set('deleteDraft');
   }
 
   protected cancelPending(): void {
-    const confirmed = window.confirm(
-      'Cancelar esta ordem pendente? Ela não seguirá para processamento.',
-    );
+    this.confirmation.set('cancelPending');
+  }
 
-    if (confirmed) {
-      this.runAction(this.api.cancel(this.id), 'Não foi possível cancelar a ordem.');
+  protected closeConfirmation(): void {
+    this.confirmation.set(null);
+  }
+
+  protected confirmAction(): void {
+    const confirmation = this.confirmation();
+    this.closeConfirmation();
+
+    if (confirmation === 'deleteDraft') {
+      this.runAction(
+        this.api.cancel(this.id),
+        this.i18n.t('error.deleteDraft'),
+        this.i18n.t('error.draftChanged'),
+      );
+    } else if (confirmation === 'cancelPending') {
+      this.runAction(
+        this.api.cancel(this.id),
+        this.i18n.t('error.cancel'),
+        this.i18n.t('error.cancelRace'),
+      );
     }
   }
 
-  protected refresh(): void {
-    this.loadPaymentOrder();
-  }
-
-  private runAction(operation: Observable<void>, fallbackMessage: string): void {
+  private runAction(
+    operation: Observable<void>,
+    fallbackMessage: string,
+    conflictMessage = fallbackMessage,
+  ): void {
     this.acting.set(true);
     this.error.set(null);
     this.clearRefreshTimer();
@@ -93,12 +93,18 @@ export class PaymentOrderDetails implements OnInit {
     operation.pipe(finalize(() => this.acting.set(false))).subscribe({
       next: () => this.loadPaymentOrder(),
       error: (error: unknown) => {
-        this.error.set(getApiErrorMessage(error, fallbackMessage));
+        const message =
+          error instanceof HttpErrorResponse && error.status === 409
+            ? conflictMessage
+            : getApiErrorMessage(error, fallbackMessage);
+
+        this.error.set(message);
+        this.loadPaymentOrder(true);
       },
     });
   }
 
-  private loadPaymentOrder(): void {
+  private loadPaymentOrder(preserveError = false): void {
     this.clearRefreshTimer();
 
     this.api
@@ -107,13 +113,15 @@ export class PaymentOrderDetails implements OnInit {
       .subscribe({
         next: (paymentOrder) => {
           this.order.set(paymentOrder);
-          this.error.set(null);
+
+          if (!preserveError) {
+            this.error.set(null);
+          }
+
           this.scheduleRefresh(paymentOrder.status);
         },
         error: (error: unknown) => {
-          this.error.set(
-            getApiErrorMessage(error, 'Não foi possível carregar a ordem de pagamento.'),
-          );
+          this.error.set(getApiErrorMessage(error, this.i18n.t('error.load')));
         },
       });
   }
