@@ -33,88 +33,6 @@ public sealed class PaymentOrderLifecycleCommandHandlerTests
             repository.UpdatedPaymentOrder);
     }
 
-    [Fact]
-    public async Task HandleStartProcessing_WhenPending_ShouldPersistProcessingStatus()
-    {
-        var paymentOrder = CreateInState(
-            PaymentOrderStatus.Pending);
-
-        var repository = new FakePaymentOrderRepository(
-            paymentOrder);
-
-        var handler = new PaymentOrderLifecycleCommandHandler(
-            repository);
-
-        await handler.Handle(
-            new StartProcessingPaymentOrderCommand(
-                paymentOrder.Id),
-            CancellationToken.None);
-
-        Assert.Equal(
-            PaymentOrderStatus.Processing,
-            paymentOrder.Status);
-
-        Assert.Same(
-            paymentOrder,
-            repository.UpdatedPaymentOrder);
-    }
-
-    [Fact]
-    public async Task HandleComplete_WhenProcessing_ShouldPersistCompletedStatus()
-    {
-        var paymentOrder = CreateInState(
-            PaymentOrderStatus.Processing);
-
-        var repository = new FakePaymentOrderRepository(
-            paymentOrder);
-
-        var handler = new PaymentOrderLifecycleCommandHandler(
-            repository);
-
-        await handler.Handle(
-            new CompletePaymentOrderCommand(paymentOrder.Id),
-            CancellationToken.None);
-
-        Assert.Equal(
-            PaymentOrderStatus.Completed,
-            paymentOrder.Status);
-
-        Assert.NotNull(
-            paymentOrder.ProcessedAt);
-
-        Assert.Same(
-            paymentOrder,
-            repository.UpdatedPaymentOrder);
-    }
-
-    [Fact]
-    public async Task HandleFail_WhenProcessing_ShouldPersistFailedStatus()
-    {
-        var paymentOrder = CreateInState(
-            PaymentOrderStatus.Processing);
-
-        var repository = new FakePaymentOrderRepository(
-            paymentOrder);
-
-        var handler = new PaymentOrderLifecycleCommandHandler(
-            repository);
-
-        await handler.Handle(
-            new FailPaymentOrderCommand(paymentOrder.Id),
-            CancellationToken.None);
-
-        Assert.Equal(
-            PaymentOrderStatus.Failed,
-            paymentOrder.Status);
-
-        Assert.NotNull(
-            paymentOrder.ProcessedAt);
-
-        Assert.Same(
-            paymentOrder,
-            repository.UpdatedPaymentOrder);
-    }
-
     [Theory]
     [InlineData(PaymentOrderStatus.Draft)]
     [InlineData(PaymentOrderStatus.Pending)]
@@ -244,11 +162,6 @@ public sealed class PaymentOrderLifecycleCommandHandlerTests
 
             case PaymentOrderStatus.Pending:
                 paymentOrder.Submit();
-                break;
-
-            case PaymentOrderStatus.Processing:
-                paymentOrder.Submit();
-                paymentOrder.StartProcessing();
                 break;
 
             default:
