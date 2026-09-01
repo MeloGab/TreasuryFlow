@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.EntityFrameworkCore;
 using TreasuryFlow.Api.Common.ExceptionHandling;
 using TreasuryFlow.Application;
@@ -30,6 +31,12 @@ builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 
 builder.Services.AddOpenApi();
 
+builder.Services
+    .AddHealthChecks()
+    .AddDbContextCheck<TreasuryFlowDbContext>(
+        name: "sqlserver",
+        tags: ["ready"]);
+
 var app = builder.Build();
 
 if (app.Configuration.GetValue<bool>(
@@ -55,6 +62,21 @@ app.UseHttpsRedirection();
 app.UseAuthorization();
 
 app.MapControllers();
+
+app.MapHealthChecks(
+    "/health/live",
+    new HealthCheckOptions
+    {
+        Predicate = _ => false
+    });
+
+app.MapHealthChecks(
+    "/health/ready",
+    new HealthCheckOptions
+    {
+        Predicate = healthCheck =>
+            healthCheck.Tags.Contains("ready")
+    });
 
 app.Run();
 
