@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using TreasuryFlow.Infrastructure.Persistence;
 
@@ -12,9 +13,11 @@ using TreasuryFlow.Infrastructure.Persistence;
 namespace TreasuryFlow.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(TreasuryFlowDbContext))]
-    partial class TreasuryFlowDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260831232324_LimitPaymentOrderTextLengths")]
+    partial class LimitPaymentOrderTextLengths
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

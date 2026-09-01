@@ -48,6 +48,51 @@ public class PaymentOrderTests
         Assert.Throws<DomainException>(action);
     }
 
+    [Fact]
+    public void Create_WithDescriptionExceedingMaximumLength_ShouldThrowDomainException()
+    {
+        var description = new string(
+            'a',
+            PaymentOrder.MaxDescriptionLength + 1);
+
+        var action = () => PaymentOrder.Create(
+            description,
+            15000m,
+            "BRL",
+            "Fornecedor XPTO");
+
+        Assert.Throws<DomainException>(action);
+    }
+
+    [Fact]
+    public void Create_WithBeneficiaryExceedingMaximumLength_ShouldThrowDomainException()
+    {
+        var beneficiary = new string(
+            'a',
+            PaymentOrder.MaxBeneficiaryLength + 1);
+
+        var action = () => PaymentOrder.Create(
+            "Pagamento fornecedor",
+            15000m,
+            "BRL",
+            beneficiary);
+
+        Assert.Throws<DomainException>(action);
+    }
+
+    [Fact]
+    public void Create_WithSurroundingWhitespace_ShouldNormalizeTextFields()
+    {
+        var paymentOrder = PaymentOrder.Create(
+            "  Pagamento fornecedor  ",
+            15000m,
+            "BRL",
+            "  Fornecedor XPTO  ");
+
+        Assert.Equal("Pagamento fornecedor", paymentOrder.Description);
+        Assert.Equal("Fornecedor XPTO", paymentOrder.Beneficiary);
+    }
+
     [Theory]
     [InlineData("")]
     [InlineData(" ")]
@@ -98,6 +143,25 @@ public class PaymentOrderTests
         Assert.Equal(previousCreatedAt, paymentOrder.CreatedAt);
         Assert.Null(paymentOrder.ProcessedAt);
         Assert.Empty(paymentOrder.DomainEvents);
+    }
+
+    [Fact]
+    public void UpdateDetails_WithSurroundingWhitespace_ShouldNormalizeTextFields()
+    {
+        var paymentOrder = CreateValidPaymentOrder();
+
+        paymentOrder.UpdateDetails(
+            "  Updated supplier payment  ",
+            2500.75m,
+            "EUR",
+            "  Updated Supplier Ltd.  ");
+
+        Assert.Equal(
+            "Updated supplier payment",
+            paymentOrder.Description);
+        Assert.Equal(
+            "Updated Supplier Ltd.",
+            paymentOrder.Beneficiary);
     }
 
     [Theory]

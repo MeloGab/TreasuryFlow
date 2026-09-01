@@ -1,4 +1,5 @@
 using TreasuryFlow.Application.PaymentOrders.Commands.UpdatePaymentOrder;
+using TreasuryFlow.Domain.PaymentOrders;
 
 namespace TreasuryFlow.Application.UnitTests.PaymentOrders.Commands.UpdatePaymentOrder;
 
@@ -66,6 +67,50 @@ public sealed class UpdatePaymentOrderCommandValidatorTests
             result.Errors,
             error => error.PropertyName ==
                 nameof(UpdatePaymentOrderCommand.Beneficiary));
+    }
+
+    [Fact]
+    public void Validate_WithDescriptionExceedingMaximumLength_ShouldHaveValidationError()
+    {
+        var command = CreateValidCommand() with
+        {
+            Description = new string(
+                'a',
+                PaymentOrder.MaxDescriptionLength + 1)
+        };
+
+        var result = _validator.Validate(command);
+
+        var error = Assert.Single(
+            result.Errors,
+            error => error.PropertyName ==
+                nameof(UpdatePaymentOrderCommand.Description));
+
+        Assert.Equal(
+            "Description cannot exceed 200 characters.",
+            error.ErrorMessage);
+    }
+
+    [Fact]
+    public void Validate_WithBeneficiaryExceedingMaximumLength_ShouldHaveValidationError()
+    {
+        var command = CreateValidCommand() with
+        {
+            Beneficiary = new string(
+                'a',
+                PaymentOrder.MaxBeneficiaryLength + 1)
+        };
+
+        var result = _validator.Validate(command);
+
+        var error = Assert.Single(
+            result.Errors,
+            error => error.PropertyName ==
+                nameof(UpdatePaymentOrderCommand.Beneficiary));
+
+        Assert.Equal(
+            "Beneficiary cannot exceed 150 characters.",
+            error.ErrorMessage);
     }
 
     [Theory]
