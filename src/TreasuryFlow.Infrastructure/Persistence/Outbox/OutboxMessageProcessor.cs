@@ -37,6 +37,9 @@ public sealed class OutboxMessageProcessor(
         {
             try
             {
+                // Publicar no broker e marcar a mensagem como processada são
+                // operações separadas. Por isso, o consumidor deve tolerar
+                // uma eventual republicação da mesma mensagem.
                 await PublishAsync(
                     message,
                     cancellationToken);

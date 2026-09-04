@@ -63,6 +63,9 @@ app.UseAuthorization();
 
 app.MapControllers();
 
+// O liveness não consulta dependências externas: uma indisponibilidade
+// temporária do banco não significa que o processo da API precisa ser
+// reiniciado.
 app.MapHealthChecks(
     "/health/live",
     new HealthCheckOptions

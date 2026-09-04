@@ -50,6 +50,9 @@ public sealed class PaymentOrderSubmittedIntegrationEventHandler(
                 $"Payment order '{integrationEvent.PaymentOrderId}' " +
                 "was not found.");
 
+        // Uma entrega anterior pode ter persistido Processing e falhado antes
+        // da conclusão. Nesse caso, a nova entrega retoma o processamento sem
+        // repetir uma transição de estado que já aconteceu.
         if (paymentOrder.Status !=
             PaymentOrderStatus.Processing)
         {
