@@ -26,11 +26,13 @@ export class PaymentOrderForm implements OnInit {
   protected readonly editable = signal(true);
   protected readonly error = signal<string | null>(null);
   protected readonly currencies = ['BRL', 'USD', 'EUR'];
+  protected readonly maxDescriptionLength = 200;
+  protected readonly maxBeneficiaryLength = 150;
 
   protected readonly form = new FormGroup({
     description: new FormControl('', {
       nonNullable: true,
-      validators: [Validators.required],
+      validators: [Validators.required, Validators.maxLength(this.maxDescriptionLength)],
     }),
     amount: new FormControl<number | null>(null, {
       validators: [
@@ -45,7 +47,7 @@ export class PaymentOrderForm implements OnInit {
     }),
     beneficiary: new FormControl('', {
       nonNullable: true,
-      validators: [Validators.required],
+      validators: [Validators.required, Validators.maxLength(this.maxBeneficiaryLength)],
     }),
   });
 

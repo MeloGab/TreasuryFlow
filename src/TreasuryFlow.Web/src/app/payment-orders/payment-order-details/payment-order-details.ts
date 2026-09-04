@@ -51,6 +51,9 @@ export class PaymentOrderDetails implements OnInit {
   }
 
   protected deleteDraft(): void {
+    // "Excluir" é um conceito de apresentação. A API preserva o histórico
+    // financeiro mudando o estado da ordem para Cancelled, sem apagar o
+    // registro fisicamente.
     this.confirmation.set('deleteDraft');
   }
 

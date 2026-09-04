@@ -21,9 +21,18 @@
 
     <div class="field full-width">
       <label for="description">{{ i18n.t('form.description') }}</label>
-      <input id="description" type="text" formControlName="description" autocomplete="off" />
+      <input
+        id="description"
+        type="text"
+        formControlName="description"
+        autocomplete="off"
+        [attr.maxlength]="maxDescriptionLength"
+      />
       @if (form.controls.description.touched && form.controls.description.hasError('required')) {
         <small>{{ i18n.t('form.descriptionRequired') }}</small>
+      }
+      @if (form.controls.description.touched && form.controls.description.hasError('maxlength')) {
+        <small>{{ i18n.t('form.descriptionTooLong') }}</small>
       }
     </div>
 
@@ -46,9 +55,18 @@
 
     <div class="field full-width">
       <label for="beneficiary">{{ i18n.t('form.beneficiary') }}</label>
-      <input id="beneficiary" type="text" formControlName="beneficiary" autocomplete="off" />
+      <input
+        id="beneficiary"
+        type="text"
+        formControlName="beneficiary"
+        autocomplete="off"
+        [attr.maxlength]="maxBeneficiaryLength"
+      />
       @if (form.controls.beneficiary.touched && form.controls.beneficiary.hasError('required')) {
         <small>{{ i18n.t('form.beneficiaryRequired') }}</small>
+      }
+      @if (form.controls.beneficiary.touched && form.controls.beneficiary.hasError('maxlength')) {
+        <small>{{ i18n.t('form.beneficiaryTooLong') }}</small>
       }
     </div>
 

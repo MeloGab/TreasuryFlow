@@ -370,6 +370,9 @@ public sealed class RabbitMqConsumerBackgroundService(
             Headers = headers
         };
 
+        // O encaminhamento precisa ser confirmado pelo RabbitMQ antes do ACK
+        // da entrega original. Se a publicação falhar, a mensagem original
+        // continua disponível para ser colocada novamente na fila.
         await channel.BasicPublishAsync(
             exchange: exchangeName,
             routingKey: routingKey,
@@ -419,6 +422,9 @@ public sealed class RabbitMqConsumerBackgroundService(
             arguments: null,
             cancellationToken: cancellationToken);
 
+        // A fila de retry segura a mensagem durante o TTL e, ao expirar,
+        // usa dead-letter para devolvê-la à exchange principal, onde ela será
+        // roteada novamente para a fila de processamento.
         var retryQueueArguments =
             new Dictionary<string, object?>
             {

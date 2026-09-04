@@ -39,10 +39,12 @@ public sealed class PaymentOrderConfiguration
 
         builder.Property(
                 paymentOrder => paymentOrder.Description)
+            .HasMaxLength(PaymentOrder.MaxDescriptionLength)
             .IsRequired();
 
         builder.Property(
                 paymentOrder => paymentOrder.Beneficiary)
+            .HasMaxLength(PaymentOrder.MaxBeneficiaryLength)
             .IsRequired();
 
         builder.Property(

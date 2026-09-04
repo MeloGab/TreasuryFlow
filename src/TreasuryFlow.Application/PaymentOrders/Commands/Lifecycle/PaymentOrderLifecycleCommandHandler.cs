@@ -8,9 +8,6 @@ namespace TreasuryFlow.Application.PaymentOrders.Commands.Lifecycle;
 public sealed class PaymentOrderLifecycleCommandHandler(
     IPaymentOrderRepository paymentOrderRepository)
     : IRequestHandler<SubmitPaymentOrderCommand>,
-        IRequestHandler<StartProcessingPaymentOrderCommand>,
-        IRequestHandler<CompletePaymentOrderCommand>,
-        IRequestHandler<FailPaymentOrderCommand>,
         IRequestHandler<CancelPaymentOrderCommand>
 {
     public Task Handle(
@@ -20,36 +17,6 @@ public sealed class PaymentOrderLifecycleCommandHandler(
         return ChangeStateAsync(
             request.Id,
             paymentOrder => paymentOrder.Submit(),
-            cancellationToken);
-    }
-
-    public Task Handle(
-        StartProcessingPaymentOrderCommand request,
-        CancellationToken cancellationToken)
-    {
-        return ChangeStateAsync(
-            request.Id,
-            paymentOrder => paymentOrder.StartProcessing(),
-            cancellationToken);
-    }
-
-    public Task Handle(
-        CompletePaymentOrderCommand request,
-        CancellationToken cancellationToken)
-    {
-        return ChangeStateAsync(
-            request.Id,
-            paymentOrder => paymentOrder.Complete(),
-            cancellationToken);
-    }
-
-    public Task Handle(
-        FailPaymentOrderCommand request,
-        CancellationToken cancellationToken)
-    {
-        return ChangeStateAsync(
-            request.Id,
-            paymentOrder => paymentOrder.Fail(),
             cancellationToken);
     }
 

@@ -34,6 +34,9 @@ public sealed class MinioPaymentReceiptStorage(
             content,
             writable: false);
 
+        // O nome determinístico faz uma nova tentativa gravar o mesmo
+        // comprovante lógico, em vez de criar vários objetos para a mesma
+        // ordem de pagamento.
         var objectName =
             $"payment-orders/{receipt.PaymentOrderId}/receipt.json";
 

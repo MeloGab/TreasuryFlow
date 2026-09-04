@@ -79,6 +79,8 @@ public sealed class TreasuryFlowDbContext(
         }
     }
 
+    // Os eventos viram mensagens do Outbox antes do SaveChanges para que
+    // o estado do agregado e a intenção de publicação usem a mesma transação.
     private PendingOutbox AddOutboxMessages()
     {
         var aggregates = ChangeTracker
@@ -126,6 +128,9 @@ public sealed class TreasuryFlowDbContext(
         }
     }
 
+    // Se a persistência falhar, removemos apenas as mensagens recém-criadas
+    // do rastreamento. Assim, uma nova tentativa poderá recriá-las a partir
+    // dos eventos que continuam no agregado.
     private void DetachOutboxMessages(
         IEnumerable<OutboxMessage> messages)
     {

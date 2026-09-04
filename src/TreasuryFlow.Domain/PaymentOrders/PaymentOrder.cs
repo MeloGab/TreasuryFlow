@@ -7,6 +7,10 @@ namespace TreasuryFlow.Domain.PaymentOrders;
 
 public class PaymentOrder
 {
+    public const int MaxDescriptionLength = 200;
+
+    public const int MaxBeneficiaryLength = 150;
+
     private readonly List<IDomainEvent> _domainEvents = [];
 
     public Guid Id { get; private set; }
@@ -52,16 +56,16 @@ public class PaymentOrder
         string currency,
         string beneficiary)
     {
-        var money = ValidateDetails(
+        var details = ValidateDetails(
             description,
             amount,
             currency,
             beneficiary);
 
         return new PaymentOrder(
-            description,
-            money,
-            beneficiary);
+            details.Description,
+            details.Amount,
+            details.Beneficiary);
     }
 
     public void UpdateDetails(
@@ -76,15 +80,15 @@ public class PaymentOrder
                 "Only draft payment orders can be updated.");
         }
 
-        var updatedAmount = ValidateDetails(
+        var details = ValidateDetails(
             description,
             amount,
             currency,
             beneficiary);
 
-        Description = description;
-        Amount = updatedAmount;
-        Beneficiary = beneficiary;
+        Description = details.Description;
+        Amount = details.Amount;
+        Beneficiary = details.Beneficiary;
     }
 
     public void Submit()
@@ -157,27 +161,55 @@ public class PaymentOrder
         _domainEvents.Clear();
     }
 
-    private static Money ValidateDetails(
+    private static (
+        string Description,
+        Money Amount,
+        string Beneficiary) ValidateDetails(
         string description,
         decimal amount,
         string currency,
         string beneficiary)
     {
-        if (string.IsNullOrWhiteSpace(description))
-        {
-            throw new DomainException(
-                "Payment order description is required.");
-        }
+        var normalizedDescription = NormalizeRequiredText(
+            description,
+            "description",
+            MaxDescriptionLength);
 
-        if (string.IsNullOrWhiteSpace(beneficiary))
-        {
-            throw new DomainException(
-                "Payment order beneficiary is required.");
-        }
+        var normalizedBeneficiary = NormalizeRequiredText(
+            beneficiary,
+            "beneficiary",
+            MaxBeneficiaryLength);
 
-        return Money.Create(
+        var money = Money.Create(
             amount,
             currency);
+
+        return (
+            normalizedDescription,
+            money,
+            normalizedBeneficiary);
+    }
+
+    private static string NormalizeRequiredText(
+        string value,
+        string fieldName,
+        int maxLength)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            throw new DomainException(
+                $"Payment order {fieldName} is required.");
+        }
+
+        var normalizedValue = value.Trim();
+
+        if (normalizedValue.Length > maxLength)
+        {
+            throw new DomainException(
+                $"Payment order {fieldName} cannot exceed {maxLength} characters.");
+        }
+
+        return normalizedValue;
     }
 
     private void AddDomainEvent(

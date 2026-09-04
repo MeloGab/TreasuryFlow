@@ -2,11 +2,11 @@
 
 [![Continuous Integration](https://github.com/MeloGab/TreasuryFlow/actions/workflows/continuous-integration.yml/badge.svg)](https://github.com/MeloGab/TreasuryFlow/actions/workflows/continuous-integration.yml)
 
-Projeto de estudo de arquitetura de software e desenvolvimento enterprise com .NET utilizando o maximo possivel de tecnologias atuais com o objetivo de aprendizado e demonstracao de conhecimento
+Projeto de estudo de arquitetura de software e desenvolvimento empresarial com .NET, utilizando tecnologias atuais para aprendizado e demonstração de conhecimento.
 
 ## Objetivo
 
-Construir uma aplica��o de processamento de ordens de pagamento utilizando conceitos e tecnologias como:
+Construir uma aplicação de processamento de ordens de pagamento utilizando conceitos e tecnologias como:
 
 - Clean Architecture
 - Domain-Driven Design (DDD)
@@ -19,6 +19,11 @@ Construir uma aplica��o de processamento de ordens de pagamento utilizando c
 - Docker
 - GitHub Actions
 - Angular
+
+## Documentação
+
+- [Documentação técnica](docs/TREASURYFLOW-TECHNICAL-DOCUMENTATION.md)
+- [Roadmap](docs/ROADMAP.md)
 
 ## Escopo monetário inicial
 
