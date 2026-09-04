@@ -128,7 +128,7 @@ As transições internas não são endpoints públicos. Isso impede que um clien
 
 - `TreasuryFlow.Domain.UnitTests`: regras puras do domínio;
 - `TreasuryFlow.Application.UnitTests`: Commands, Queries, Handlers, validators e pipeline;
-- `TreasuryFlow.Infrastructure.IntegrationTests`: persistência, Outbox, Inbox, RabbitMQ, processamento e MinIO;
+- `TreasuryFlow.Infrastructure.IntegrationTests`: integração entre persistência e componentes da Infrastructure usando SQLite em memória e substitutos controlados; também cobre políticas e registros de RabbitMQ e MinIO, sem iniciar esses serviços reais;
 - `TreasuryFlow.Api.IntegrationTests`: contrato HTTP, erros e health checks;
 - arquivos `*.spec.ts` no projeto Web: componentes e serviços Angular.
 
@@ -269,7 +269,7 @@ Ao receber uma mensagem:
 7. registra o `MessageId` na Inbox;
 8. salva o estado final.
 
-A Inbox implementa idempotência do consumidor. RabbitMQ trabalha com entrega pelo menos uma vez; portanto, uma mesma mensagem pode reaparecer. A Inbox impede que o efeito financeiro seja repetido por causa dessa duplicidade.
+A Inbox evita reprocessar mensagens cujo sucesso já foi registrado. RabbitMQ trabalha com entrega pelo menos uma vez; portanto, uma mesma mensagem pode reaparecer. Essa proteção reduz efeitos duplicados depois da confirmação persistida, mas não garante exactly-once para uma operação externa concluída antes da gravação da Inbox.
 
 ### 8.5 Retry e fila de falhas
 
